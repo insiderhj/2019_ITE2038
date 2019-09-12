@@ -87,8 +87,7 @@ where p.type = 'Water';
 
 select cp.nickname
 from Gym g
-         join Trainer t on g.leader_id = t.id
-         join CatchedPokemon cp on t.id = cp.owner_id
+         join CatchedPokemon cp on g.leader_id = cp.owner_id
 order by cp.level desc
 limit 1;
 
