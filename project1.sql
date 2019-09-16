@@ -30,7 +30,8 @@ order by nickname;
 
 select name
 from Pokemon
-where name regexp '^[AEIOU]';
+where name regexp '^[AEIOU]'
+order by name;
 
 select avg(level)
 from CatchedPokemon;
@@ -182,7 +183,7 @@ from Trainer t
 group by t.hometown
 order by max(level) desc;
 
-select p1.name as first, p2.name as second, p3.name as third
+select p1.id, p1.name as first, p2.name as second, p3.name as third
 from Evolution e1
          join Evolution e2 on e1.after_id = e2.before_id
          join Pokemon p1 on e1.before_id = p1.id
