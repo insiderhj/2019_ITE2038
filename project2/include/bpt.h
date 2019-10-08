@@ -9,6 +9,13 @@
 
 #define PAGE_SIZE 4096
 #define OFF(page_num) (page_num * PAGE_SIZE)
+#define INTERNAL_ORDER 249
+#define LEAF_ORDER 32
+
+#define BAD_REQUEST -400
+#define NOT_FOUND -404
+#define CONFLICT -409
+#define INTERNAL_ERR -500
 
 typedef uint64_t pagenum_t;
 
@@ -17,17 +24,17 @@ typedef struct key_page_t key_page_t;
 typedef struct header_page_t header_page_t;
 typedef struct free_page_t free_page_t;
 typedef struct node_page_t node_page_t;
-typedef union page_t page_t;
+typedef struct page_t page_t;
 
 /* key, value type for leaf node */
 struct key_value_t {
-    uint64_t key;
+    int64_t key;
     uint8_t value[120];
 };
 
 /* key, page_number type for internal node */
 struct key_page_t {
-    uint64_t key;
+    int64_t key;
     uint64_t page_number;
 };
 
@@ -35,6 +42,7 @@ struct header_page_t {
     uint64_t free_page_number;
     uint64_t root_page_number;
     uint64_t number_of_pages;
+    int8_t reserved[4072];
 };
 
 struct free_page_t {
@@ -65,10 +73,12 @@ struct node_page_t {
     };
 };
 
-union page_t {
-    header_page_t header_page;
-    free_page_t free_page;
-    node_page_t node_page;
+struct page_t {
+    union{
+        header_page_t header;
+        free_page_t free;
+        node_page_t node;
+    };
 };
 
 pagenum_t file_alloc_page();
@@ -76,10 +86,15 @@ void file_free_page(pagenum_t pagenum);
 void file_read_page(pagenum_t pagenum, page_t* dest);
 void file_write_page(pagenum_t pagenum, const page_t* src);
 
-void set_number_of_pages(page_t* header_page, uint64_t number_of_pages);
 int open_table(char* pathname);
-int db_insert(int64_t key, char* value);
+
+pagenum_t find_leaf(pagenum_t root, int64_t key);
 int db_find(int64_t key, char* ret_val);
+
+void insert_into_leaf(pagenum_t leaf_num, page_t* leaf, int64_t key, char* value);
+void insert_into_leaf_after_splitting(pagenum_t root_num, page_t* leaf, int64_t key, char* value);
+int db_insert(int64_t key, char* value);
+
 int db_delete(int64_t key);
 
 #endif
