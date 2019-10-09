@@ -64,6 +64,7 @@ void file_read_page(pagenum_t pagenum, page_t* dest) {
 /* Write an in-memory page(src) to the on-disk page
  */
 void file_write_page(pagenum_t pagenum, const page_t* src) {
+    printf("%d", src->header.number_of_pages);
     pwrite(fd, &src, PAGE_SIZE, OFF(pagenum));
 }
 
@@ -78,7 +79,7 @@ int open_table(char* pathname) {
     // fd already opened
     if (fd != 0) return CONFLICT;
 
-    int fd = open(pathname, O_CREAT | O_NOFOLLOW | O_RDWR | O_SYNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+    int fd = open(pathname, O_CREAT | O_NOFOLLOW | O_RDWR | O_SYNC, 0666);
 
     // open db failed
     if (fd == -1) return INTERNAL_ERR;
