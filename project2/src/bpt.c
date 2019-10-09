@@ -73,21 +73,21 @@ void file_write_page(pagenum_t pagenum, const page_t* src) {
  */
 int open_table(char* pathname) {
     // pathname is null
-    if (!pathname) return BAD_REQUEST;
+    if (pathname == NULL) return BAD_REQUEST;
 
     // fd already opened
-    if (fd) return CONFLICT;
+    if (fd != 0) return CONFLICT;
 
-    int fd = open(pathname, O_CREAT | O_NOFOLLOW | O_RDWR | O_SYNC);
+    int fd = open(pathname, O_CREAT | O_NOFOLLOW | O_RDWR | O_SYNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 
     // open db failed
     if (fd == -1) return INTERNAL_ERR;
 
-    if (read(fd, &header_page, PAGE_SIZE) == 0) {
-        memset(&header_page, 0, PAGE_SIZE);
+    // if (read(fd, &header_page, PAGE_SIZE) == 0) {
+        memset(&header_page, 1, PAGE_SIZE);
         header_page.header.number_of_pages = 1;
         file_write_page(0, &header_page);
-    }
+    // }
 
     return fd;
 }
@@ -164,48 +164,149 @@ pagenum_t start_new_tree(int64_t key, char* value) {
     return root_num;
 }
 
-// TODO
-pagenum_t insert_into_new_root(page_t* left, int key, page_t* right) {
+/* Creates a new root for two subtrees
+ * and inserts the appropriate key into
+ * the new root.
+ * returns new root's page number
+ */
+pagenum_t insert_into_new_root(pagenum_t left_num, page_t* left,
+                               int key, pagenum_t right_num, page_t* right) {
+    page_t root;
+    pagenum_t root_num = make_node(&root);
+    root.node.key_page_numbers[0].key = key;
+    root.node.one_more_page_number = left_num;
+    root.node.key_page_numbers[0].page_number = right_num;
+    root.node.number_of_keys++;
+    left->node.parent_page_number = root_num;
+    right->node.parent_page_number = root_num;
 
+    file_write_page(left_num, left);
+    file_write_page(right_num, right);
+    file_write_page(root_num, &root);
+
+    return root_num;
 }
 
 // TODO
-int get_left_index(page_t* parent, page_t* left) {
+/* Helper function used in insert_into_parent
+ * to find the index of the parent's pointer to
+ * the node to the left of the key to be inserted.
+ */
+int get_left_index(page_t* parent, pagenum_t left_num) {
+    if (parent->node.one_more_page_number == left_num) return 0;
 
-}
-
-// TODO
-pagenum_t insert_into_node(pagenum_t root_num, page_t* parent,
-                           int left_index, int key, page_t* right) {
-
-}
-
-// TODO
-pagenum_t insert_into_node_after_splitting(pagenum_t root_num, page_t* parent,
-                                           int left_index, int key, page_t* right) {
+    int left_index = 1;
+    // ???
+    while (left_index <= parent->node.number_of_keys
+           && parent->node.key_page_numbers[left_index - 1].page_number != left_num)
+        left_index++;
     
+    return left_index;
+}
+
+/* Inserts a new key and pointer to a node
+ * into a node into which these can fit
+ * without violating the B+ tree properties.
+ */
+void insert_into_node(page_t* parent,
+                           int left_index, int key, pagenum_t right_num) {
+    int i;
+
+    for (i = parent->node.number_of_keys; i > left_index; i--) {
+        parent->node.key_page_numbers[i].page_number = parent->node.key_page_numbers[i - 1].page_number;
+        parent->node.key_page_numbers[i].key = parent->node.key_page_numbers[i - 1].key;
+    }
+    parent->node.key_page_numbers[left_index].page_number = right_num;
+    parent->node.key_page_numbers[left_index].key = key;
+    parent->node.number_of_keys++;
+}
+
+// TODO
+/* Inserts a new key and pointer to a node
+ * into a node, causing the node's size to exceed
+ * the order, and causing the node to split into two.
+ * returns root page's page number
+ */
+pagenum_t insert_into_node_after_splitting(pagenum_t root_num, pagenum_t parent_num, page_t* parent, int left_index,
+                                           int key, pagenum_t right_num) {
+    int i, j, split, k_prime;
+    page_t new_parent, child;
+    pagenum_t new_parent_num;
+    int64_t temp_keys[249];
+    pagenum_t temp_page_numbers[250];
+
+    temp_page_numbers[0] = parent->node.one_more_page_number;
+    for (i = 0, j = left_index == 0 ? 2 : 1; i < parent->node.number_of_keys; i++, j++) {
+        if (j == left_index + 1) j++;
+        temp_page_numbers[j] = parent->node.key_page_numbers[i].page_number;
+    }
+
+    for (i = 0, j = 0; i < parent->node.number_of_keys; i++, j++) {
+        if (j == left_index) j++;
+        temp_keys[j] = parent->node.key_page_numbers[i].key;
+    }
+
+    temp_page_numbers[left_index + 1] = right_num;
+    temp_keys[left_index] = key;
+
+    split = cut(INTERNAL_ORDER);
+    new_parent_num = make_node(&new_parent);
+    
+    parent->node.one_more_page_number = temp_page_numbers[0];
+    for (i = 0; i < split - 1; i++) {
+        parent->node.key_page_numbers[i].page_number = temp_page_numbers[i + 1];
+        parent->node.key_page_numbers[i].key = temp_keys[i];
+    }
+    parent->node.number_of_keys = split - 1;
+    k_prime = temp_keys[split - 1];
+    for (++i, j = 0; i < INTERNAL_ORDER; i++, j++) {
+        new_parent.node.key_page_numbers[j].page_number = temp_page_numbers[i];
+        new_parent.node.key_page_numbers[j].key = temp_keys[i];
+    }
+    new_parent.node.number_of_keys = INTERNAL_ORDER - split;
+
+    new_parent.node.parent_page_number = parent->node.parent_page_number;
+
+    file_read_page(new_parent.node.one_more_page_number, &child);
+    child.node.parent_page_number = new_parent_num;
+    file_write_page(new_parent.node.one_more_page_number, &child);
+    for (i = 0; i < new_parent.node.number_of_keys; i++) {
+        file_read_page(new_parent.node.key_page_numbers[i].page_number, &child);
+        child.node.parent_page_number = new_parent_num;
+        file_write_page(new_parent.node.key_page_numbers[i].page_number, &child);
+    }
+    
+    file_write_page(parent_num, parent);
+    file_write_page(new_parent_num, &new_parent);
+
+    return insert_into_parent(root_num, parent_num, parent, k_prime, new_parent_num, &new_parent);
 }
 
 /* Inserts a new node (leaf or internal node) into the B+ tree.
  * Returns the root page's page number after insertion.
  */
-pagenum_t insert_into_parent(pagenum_t root_num, page_t* left, int key, page_t* right) {
+pagenum_t insert_into_parent(pagenum_t root_num, pagenum_t left_num, page_t* left,
+                             int key, pagenum_t right_num, page_t* right) {
     int left_index;
     pagenum_t parent_num = left->node.parent_page_number;
 
     if (parent_num == 0) {
-        return insert_into_new_root(left, key, right);
+        return insert_into_new_root(left_num, left, key, right_num, right);
     }
 
     page_t parent;
     file_read_page(parent_num, &parent);
-    left_index = get_left_index(&parent, left);
+    left_index = get_left_index(&parent, left_num);
 
     if (parent.node.number_of_keys < INTERNAL_ORDER) {
-        return insert_into_node(root_num, &parent, left_index, key, &right);
+        insert_into_node(&parent, left_index, key, right_num);
+        file_write_page(left_num, left);
+        file_write_page(right_num, right);
+        file_write_page(parent_num, &parent);
+        return root_num;
     }
 
-    return insert_into_node_after_splitting(root_num, &parent, left_index, key, &right);
+    return insert_into_node_after_splitting(root_num, parent_num, &parent, left_index, key, right_num);
 }
 
 /* Inserts a new pointer to a record and its corresponding key into a leaf.
@@ -278,9 +379,7 @@ pagenum_t insert_into_leaf_after_splitting(pagenum_t root_num, pagenum_t leaf_nu
     new_leaf.node.parent_page_number = leaf->node.parent_page_number;
     new_key = new_leaf.node.key_values[0].key;
 
-    file_write_page(leaf_num, &leaf);
-    file_write_page(new_leaf_num, &new_leaf);
-    return insert_into_parent(root_num, &leaf, new_key, &new_leaf);
+    return insert_into_parent(root_num, leaf_num, &leaf, new_key, new_leaf_num, &new_leaf);
 }
 
 /* Insert input ‘key/value’ (record) to data file at the right place.
@@ -306,9 +405,12 @@ int db_insert(int64_t key, char* value) {
         return 0;
     }
 
-    header_page.header.root_page_number = insert_into_leaf_after_splitting(
+    pagenum_t new_root_num = insert_into_leaf_after_splitting(
         header_page.header.root_page_number, leaf_num, &leaf, key, value);
-    file_write_page(0, &header_page);
+    
+    // change header info if root page changes
+    if (header_page.header.root_page_number != new_root_num) 
+        file_write_page(0, &header_page);
     return 0;
 }
 

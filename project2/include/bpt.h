@@ -8,7 +8,7 @@
 #include <fcntl.h>
 
 #define PAGE_SIZE 4096
-#define OFF(page_num) (page_num * PAGE_SIZE)
+#define OFF(pagenum) ((pagenum) * PAGE_SIZE)
 #define INTERNAL_ORDER 249
 #define LEAF_ORDER 32
 
@@ -91,10 +91,21 @@ int open_table(char* pathname);
 pagenum_t find_leaf(pagenum_t root, int64_t key);
 int db_find(int64_t key, char* ret_val);
 
+pagenum_t make_node(page_t* node);
+pagenum_t start_new_tree(int64_t key, char* value);
+pagenum_t insert_into_new_root(pagenum_t left_num, page_t* left, int key, pagenum_t right_num, page_t* right);
+int get_left_index(page_t* parent, pagenum_t left_num);
+void insert_into_node(page_t* parent, int left_index, int key, pagenum_t right_num);
+pagenum_t insert_into_node_after_splitting(pagenum_t root_num, pagenum_t parent_num, page_t* parent, int left_index, int key, pagenum_t right_num);
+pagenum_t insert_into_parent(pagenum_t root_num, pagenum_t left_num, page_t* left, int key, pagenum_t right_num, page_t* right);
+int cut(int len);
 void insert_into_leaf(pagenum_t leaf_num, page_t* leaf, int64_t key, char* value);
 pagenum_t insert_into_leaf_after_splitting(pagenum_t root_num, pagenum_t leaf_num, page_t* leaf, int64_t key, char* value);
 int db_insert(int64_t key, char* value);
 
 int db_delete(int64_t key);
+
+extern int fd;
+extern page_t header_page;
 
 #endif
