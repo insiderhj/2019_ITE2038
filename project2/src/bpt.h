@@ -29,7 +29,7 @@ typedef struct page_t page_t;
 /* key, value type for leaf node */
 struct key_value_t {
     int64_t key;
-    uint8_t value[120];
+    char value[120];
 };
 
 /* key, page_number type for internal node */

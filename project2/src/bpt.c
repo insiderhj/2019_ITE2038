@@ -64,7 +64,9 @@ void file_read_page(pagenum_t pagenum, page_t* dest) {
 /* Write an in-memory page(src) to the on-disk page
  */
 void file_write_page(pagenum_t pagenum, const page_t* src) {
-    pwrite(fd, src, PAGE_SIZE, OFF(pagenum));
+    // pwrite(fd, src, PAGE_SIZE, OFF(pagenum));
+    lseek(fd, pagenum * 4096, SEEK_SET);
+    write(fd, src, PAGE_SIZE);
 }
 
 /* Open existing data file using ‘pathname’ or create one if not existed.
@@ -84,7 +86,7 @@ int open_table(char* pathname) {
     if (fd == -1) return INTERNAL_ERR;
 
     // if (read(fd, &header_page, PAGE_SIZE) == 0) {
-        memset(&header_page, 1, PAGE_SIZE);
+        memset(&header_page, 0, PAGE_SIZE);
         header_page.header.number_of_pages = 1;
         file_write_page(0, &header_page);
     // }
@@ -144,7 +146,7 @@ int db_find(int64_t key, char* ret_val) {
 /* Creates a new node
  */
 pagenum_t make_node(page_t* node) {
-    pagenum_t node_num = file_alloc_page(node);
+    pagenum_t node_num = file_alloc_page();
     memset(node, 0, PAGE_SIZE);
     return node_num;
 }
@@ -325,7 +327,7 @@ void insert_into_leaf(pagenum_t leaf_num, page_t* leaf, int64_t key, char* value
     leaf->node.key_values[insertion_point].key = key;
     strcpy(leaf->node.key_values[insertion_point].value, value);
     leaf->node.number_of_keys++;
-    file_write_page(leaf_num, &leaf);
+    file_write_page(leaf_num, leaf);
 }
 
 int cut(int len) {
@@ -343,7 +345,7 @@ pagenum_t insert_into_leaf_after_splitting(pagenum_t root_num, pagenum_t leaf_nu
     page_t new_leaf;
     pagenum_t new_leaf_num;
     int temp_keys[LEAF_ORDER];
-    uint8_t temp_values[120][LEAF_ORDER];
+    char temp_values[120][LEAF_ORDER];
     int insertion_index, split, new_key, i, j;
 
     new_leaf_num = make_node(&new_leaf);
@@ -379,14 +381,14 @@ pagenum_t insert_into_leaf_after_splitting(pagenum_t root_num, pagenum_t leaf_nu
     new_leaf.node.parent_page_number = leaf->node.parent_page_number;
     new_key = new_leaf.node.key_values[0].key;
 
-    return insert_into_parent(root_num, leaf_num, &leaf, new_key, new_leaf_num, &new_leaf);
+    return insert_into_parent(root_num, leaf_num, leaf, new_key, new_leaf_num, &new_leaf);
 }
 
 /* Insert input ‘key/value’ (record) to data file at the right place.
  * If success, return 0. Otherwise, return non-zero value.
  */
 int db_insert(int64_t key, char* value) {
-    uint8_t res[120];
+    char res[120];
     
     if (fd == 0) return BAD_REQUEST;
     if (db_find(key, res) == 0) return CONFLICT;
@@ -415,5 +417,5 @@ int db_insert(int64_t key, char* value) {
 }
 
 int db_delete(int64_t key) {
-
+    return 0;
 }
