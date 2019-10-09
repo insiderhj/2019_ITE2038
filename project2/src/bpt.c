@@ -1,6 +1,6 @@
 #include "bpt.h"
 
-int fd = 0;
+int fd;
 page_t header_page;
 
 /* Allocate an on-disk page from the free page list
@@ -21,7 +21,6 @@ pagenum_t file_alloc_page() {
         header_page.header.number_of_pages++;
 
         // write changes to file
-        file_write_page(0, &header_page);
         file_write_page(new_page_number, &new_page);
     }
     
@@ -58,14 +57,13 @@ void file_free_page(pagenum_t pagenum) {
 /* Read an on-disk page into the in-memory page structure(dest)
  */
 void file_read_page(pagenum_t pagenum, page_t* dest) {
-    pread(fd, &dest, PAGE_SIZE, OFF(pagenum));
+    pread(fd, dest, PAGE_SIZE, OFF(pagenum));
 }
 
 /* Write an in-memory page(src) to the on-disk page
  */
 void file_write_page(pagenum_t pagenum, const page_t* src) {
-    printf("%d", src->header.number_of_pages);
-    pwrite(fd, &src, PAGE_SIZE, OFF(pagenum));
+    pwrite(fd, src, PAGE_SIZE, OFF(pagenum));
 }
 
 /* Open existing data file using ‘pathname’ or create one if not existed.
@@ -79,7 +77,7 @@ int open_table(char* pathname) {
     // fd already opened
     if (fd != 0) return CONFLICT;
 
-    int fd = open(pathname, O_CREAT | O_NOFOLLOW | O_RDWR | O_SYNC, 0666);
+    fd = open(pathname, O_CREAT | O_NOFOLLOW | O_RDWR | O_SYNC, 0666);
 
     // open db failed
     if (fd == -1) return INTERNAL_ERR;
@@ -89,7 +87,6 @@ int open_table(char* pathname) {
         header_page.header.number_of_pages = 1;
         file_write_page(0, &header_page);
     }
-
     return fd;
 }
 
@@ -107,12 +104,13 @@ pagenum_t find_leaf(pagenum_t root, int64_t key) {
 
     while (!c.node.is_leaf) {
         i = 0;
-        while (c.node.number_of_keys) {
+        while (i < c.node.number_of_keys) {
             if (key >= c.node.key_page_numbers[i].key) i++;
             else break;
         }
-        c_num = c.node.key_page_numbers[i].page_number;
-        file_read_page(c.node.key_page_numbers[i].page_number, &c);
+        if (i == 0) c_num = c.node.one_more_page_number;
+        else c_num = c.node.key_page_numbers[i - 1].page_number;
+        file_read_page(c_num, &c);
     }
     return c_num;
 }
@@ -299,7 +297,7 @@ pagenum_t insert_into_parent(pagenum_t root_num, pagenum_t left_num, page_t* lef
     file_read_page(parent_num, &parent);
     left_index = get_left_index(&parent, left_num);
 
-    if (parent.node.number_of_keys < INTERNAL_ORDER) {
+    if (parent.node.number_of_keys < INTERNAL_ORDER - 1) {
         insert_into_node(&parent, left_index, key, right_num);
         file_write_page(left_num, left);
         file_write_page(right_num, right);
@@ -377,6 +375,9 @@ pagenum_t insert_into_leaf_after_splitting(pagenum_t root_num, pagenum_t leaf_nu
     }
     new_leaf.node.number_of_keys = LEAF_ORDER - split;
 
+    new_leaf.node.right_sibling_page_number = leaf->node.right_sibling_page_number;
+    leaf->node.right_sibling_page_number = new_leaf_num;
+
     new_leaf.node.parent_page_number = leaf->node.parent_page_number;
     new_key = new_leaf.node.key_values[0].key;
 
@@ -392,6 +393,8 @@ int db_insert(int64_t key, char* value) {
     if (fd == 0) return BAD_REQUEST;
     if (db_find(key, res) == 0) return CONFLICT;
 
+    file_read_page(0, &header_page);
+    
     if (header_page.header.root_page_number == 0) {
         header_page.header.root_page_number = start_new_tree(key, value);
         file_write_page(0, &header_page);
@@ -401,17 +404,14 @@ int db_insert(int64_t key, char* value) {
     pagenum_t leaf_num = find_leaf(header_page.header.root_page_number, key);
     page_t leaf;
     file_read_page(leaf_num, &leaf);
-    if (leaf.node.number_of_keys < LEAF_ORDER) {
+    if (leaf.node.number_of_keys < LEAF_ORDER - 1) {
         insert_into_leaf(leaf_num, &leaf, key, value);
         return 0;
     }
 
-    pagenum_t new_root_num = insert_into_leaf_after_splitting(
+    header_page.header.root_page_number = insert_into_leaf_after_splitting(
         header_page.header.root_page_number, leaf_num, &leaf, key, value);
-    
-    // change header info if root page changes
-    if (header_page.header.root_page_number != new_root_num) 
-        file_write_page(0, &header_page);
+    file_write_page(0, &header_page);
     return 0;
 }
 

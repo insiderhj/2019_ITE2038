@@ -108,6 +108,5 @@ int db_insert(int64_t key, char* value);
 int db_delete(int64_t key);
 
 extern int fd;
-extern page_t header_page;
 
 #endif
