@@ -58,13 +58,13 @@ void file_free_page(pagenum_t pagenum) {
 /* Read an on-disk page into the in-memory page structure(dest)
  */
 void file_read_page(pagenum_t pagenum, page_t* dest) {
-    pread(fd, dest, PAGE_SIZE, OFF(pagenum));
+    pread(fd, &dest, PAGE_SIZE, OFF(pagenum));
 }
 
 /* Write an in-memory page(src) to the on-disk page
  */
 void file_write_page(pagenum_t pagenum, const page_t* src) {
-    pwrite(fd, src, PAGE_SIZE, OFF(pagenum));
+    pwrite(fd, &src, PAGE_SIZE, OFF(pagenum));
 }
 
 /* Open existing data file using ‘pathname’ or create one if not existed.
@@ -83,11 +83,11 @@ int open_table(char* pathname) {
     // open db failed
     if (fd == -1) return INTERNAL_ERR;
 
-    // if (read(fd, &header_page, PAGE_SIZE) == 0) {
+    if (read(fd, &header_page, PAGE_SIZE) == 0) {
         memset(&header_page, 0, PAGE_SIZE);
         header_page.header.number_of_pages = 1;
         file_write_page(0, &header_page);
-    // }
+    }
 
     return fd;
 }
