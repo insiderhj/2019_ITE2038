@@ -258,23 +258,24 @@ pagenum_t insert_into_node_after_splitting(pagenum_t root_num, pagenum_t parent_
     }
     parent->node.number_of_keys = split - 1;
     k_prime = temp_keys[split - 1];
+
+    new_parent.node.one_more_page_number = temp_page_numbers[++i];
     for (++i, j = 0; i < INTERNAL_ORDER; i++, j++) {
-        new_parent.node.key_page_numbers[j].page_number = temp_page_numbers[i];
+        new_parent.node.key_page_numbers[j].page_number = temp_page_numbers[i + 1];
         new_parent.node.key_page_numbers[j].key = temp_keys[i];
     }
     new_parent.node.number_of_keys = INTERNAL_ORDER - split;
-
     new_parent.node.parent_page_number = parent->node.parent_page_number;
 
     file_read_page(new_parent.node.one_more_page_number, &child);
     child.node.parent_page_number = new_parent_num;
     file_write_page(new_parent.node.one_more_page_number, &child);
-    for (i = 0; i < new_parent.node.number_of_keys; i++) {
+    for (i = 0; i < new_parent.node.number_of_keys - 1; i++) {
         file_read_page(new_parent.node.key_page_numbers[i].page_number, &child);
         child.node.parent_page_number = new_parent_num;
         file_write_page(new_parent.node.key_page_numbers[i].page_number, &child);
     }
-    
+
     file_write_page(parent_num, parent);
     file_write_page(new_parent_num, &new_parent);
 
