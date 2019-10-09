@@ -64,9 +64,7 @@ void file_read_page(pagenum_t pagenum, page_t* dest) {
 /* Write an in-memory page(src) to the on-disk page
  */
 void file_write_page(pagenum_t pagenum, const page_t* src) {
-    // pwrite(fd, src, PAGE_SIZE, OFF(pagenum));
-    lseek(fd, pagenum * 4096, SEEK_SET);
-    write(fd, src, PAGE_SIZE);
+    pwrite(fd, src, PAGE_SIZE, OFF(pagenum));
 }
 
 /* Open existing data file using ‘pathname’ or create one if not existed.
