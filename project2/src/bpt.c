@@ -151,20 +151,61 @@ pagenum_t make_node(page_t* node) {
 
 /* First insertion:
  * start a new tree.
+ * returns new root's page number.
  */
-int start_new_tree(int64_t key, char* value) {
+pagenum_t start_new_tree(int64_t key, char* value) {
     page_t root;
-    pagenum_t root_number = make_node(&root);
+    pagenum_t root_num = make_node(&root);
     root.node.is_leaf = true;
     root.node.key_values[0].key = key;
     strcpy(root.node.key_values[0].value, value);
     root.node.number_of_keys++;
+    file_write_page(root_num, &root);
+    return root_num;
+}
+
+// TODO
+pagenum_t insert_into_new_root(page_t* left, int key, page_t* right) {
+
+}
+
+// TODO
+int get_left_index(page_t* parent, page_t* left) {
+
+}
+
+// TODO
+pagenum_t insert_into_node(pagenum_t root_num, page_t* parent,
+                           int left_index, int key, page_t* right) {
+
+}
+
+// TODO
+pagenum_t insert_into_node_after_splitting(pagenum_t root_num, page_t* parent,
+                                           int left_index, int key, page_t* right) {
     
-    header_page.header.root_page_number = root_number;
-    
-    file_write_page(0, &header_page);
-    file_write_page(root_number, &root);
-    return 0;
+}
+
+/* Inserts a new node (leaf or internal node) into the B+ tree.
+ * Returns the root page's page number after insertion.
+ */
+pagenum_t insert_into_parent(pagenum_t root_num, page_t* left, int key, page_t* right) {
+    int left_index;
+    pagenum_t parent_num = left->node.parent_page_number;
+
+    if (parent_num == 0) {
+        return insert_into_new_root(left, key, right);
+    }
+
+    page_t parent;
+    file_read_page(parent_num, &parent);
+    left_index = get_left_index(&parent, left);
+
+    if (parent.node.number_of_keys < INTERNAL_ORDER) {
+        return insert_into_node(root_num, &parent, left_index, key, &right);
+    }
+
+    return insert_into_node_after_splitting(root_num, &parent, left_index, key, &right);
 }
 
 /* Inserts a new pointer to a record and its corresponding key into a leaf.
@@ -190,13 +231,14 @@ int cut(int len) {
     return len % 2 == 0 ? len / 2 : len / 2 + 1;
 }
 
-// TODO
+// TODOTODOTODOTODOTODOTODOTODOTODOTODO
 /* Inserts a new key and pointer
  * to a new record into a leaf so as to exceed
  * the tree's order, causing the leaf to be split
  * in half.
  */
-void insert_into_leaf_after_splitting(pagenum_t root_num, page_t* leaf, int64_t key, char* value) {
+pagenum_t insert_into_leaf_after_splitting(pagenum_t root_num, pagenum_t leaf_num, page_t* leaf,
+                                      int64_t key, char* value) {
     page_t new_leaf;
     pagenum_t new_leaf_num;
     int temp_keys[LEAF_ORDER];
@@ -236,7 +278,9 @@ void insert_into_leaf_after_splitting(pagenum_t root_num, page_t* leaf, int64_t 
     new_leaf.node.parent_page_number = leaf->node.parent_page_number;
     new_key = new_leaf.node.key_values[0].key;
 
-    return insert_into_parent(root_num, leaf, new_key, new_leaf);
+    file_write_page(leaf_num, &leaf);
+    file_write_page(new_leaf_num, &new_leaf);
+    return insert_into_parent(root_num, &leaf, new_key, &new_leaf);
 }
 
 /* Insert input ‘key/value’ (record) to data file at the right place.
@@ -248,7 +292,11 @@ int db_insert(int64_t key, char* value) {
     if (fd == 0) return BAD_REQUEST;
     if (db_find(key, res) == 0) return CONFLICT;
 
-    if (header_page.header.root_page_number == 0) return start_new_tree(key, value);
+    if (header_page.header.root_page_number == 0) {
+        header_page.header.root_page_number = start_new_tree(key, value);
+        file_write_page(0, &header_page);
+        return 0;
+    }
 
     pagenum_t leaf_num = find_leaf(header_page.header.root_page_number, key);
     page_t leaf;
@@ -258,7 +306,9 @@ int db_insert(int64_t key, char* value) {
         return 0;
     }
 
-    insert_into_leaf_after_splitting(header_page.header.root_page_number, &leaf, key, value);
+    header_page.header.root_page_number = insert_into_leaf_after_splitting(
+        header_page.header.root_page_number, leaf_num, &leaf, key, value);
+    file_write_page(0, &header_page);
     return 0;
 }
 

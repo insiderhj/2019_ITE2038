@@ -92,7 +92,7 @@ pagenum_t find_leaf(pagenum_t root, int64_t key);
 int db_find(int64_t key, char* ret_val);
 
 void insert_into_leaf(pagenum_t leaf_num, page_t* leaf, int64_t key, char* value);
-void insert_into_leaf_after_splitting(pagenum_t root_num, page_t* leaf, int64_t key, char* value);
+pagenum_t insert_into_leaf_after_splitting(pagenum_t root_num, pagenum_t leaf_num, page_t* leaf, int64_t key, char* value);
 int db_insert(int64_t key, char* value);
 
 int db_delete(int64_t key);
