@@ -181,7 +181,7 @@ pagenum_t start_new_tree(int64_t key, char* value) {
  * returns new root's page number
  */
 pagenum_t insert_into_new_root(pagenum_t left_num, page_t* left,
-                               int key, pagenum_t right_num, page_t* right) {
+                               int64_t key, pagenum_t right_num, page_t* right) {
     page_t root;
     pagenum_t root_num = make_node(&root);
     root.node.key_page_numbers[0].key = key;
@@ -219,8 +219,7 @@ int get_left_index(page_t* parent, pagenum_t left_num) {
  * into a node into which these can fit
  * without violating the B+ tree properties.
  */
-void insert_into_node(page_t* parent,
-                           int left_index, int key, pagenum_t right_num) {
+void insert_into_node(page_t* parent, int left_index, int64_t key, pagenum_t right_num) {
     int i;
 
     for (i = parent->node.number_of_keys; i > left_index; i--) {
@@ -240,7 +239,7 @@ void insert_into_node(page_t* parent,
  */
 pagenum_t insert_into_node_after_splitting(pagenum_t root_num,
                                            pagenum_t parent_num, page_t* parent,
-                                           int left_index, int key, pagenum_t right_num) {
+                                           int left_index, int64_t key, pagenum_t right_num) {
     int i, j, split, k_prime;
     page_t new_parent, child;
     pagenum_t new_parent_num;
@@ -437,7 +436,8 @@ int db_insert(int64_t key, char* value) {
  * returns root page's page number after deletion.
  */
 pagenum_t delete_entry(pagenum_t root_num, pagenum_t node_num, int64_t key, char* value) {
-    
+    // 하기 싫어...
+    return root_num;
 }
 
 /* Find the matching record and delete it if found.
