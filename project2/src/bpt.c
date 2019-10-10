@@ -479,8 +479,28 @@ page_t remove_entry_from_node(page_t* node, int64_t key) {
 }
 
 //TODO
+/* returns root page's page number
+ */
 pagenum_t adjust_root(pagenum_t root_num) {
+    pagenum_t new_root_num;
+    page_t root, new_root;
+    file_read_page(root_num, &root);
 
+    // case: nonempty root
+    if (root.node.number_of_keys > 0) return root_num;
+    
+    // case: empty root
+    if (!root.node.is_leaf) {
+        new_root_num = root.node.one_more_page_number;
+        file_read_page(new_root_num, &new_root);
+        new_root.node.parent_page_number = 0;
+    }
+    else {
+        new_root_num = 0;
+    }
+    file_free_page(root_num);
+
+    return new_root_num;
 }
 
 //TODO
