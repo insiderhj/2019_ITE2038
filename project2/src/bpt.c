@@ -90,6 +90,13 @@ int open_table(char* pathname) {
     return fd;
 }
 
+/* Finds the appropriate place to
+ * split a node that is too big into two.
+ */
+int cut(int len) {
+    return len % 2 == 0 ? len / 2 : len / 2 + 1;
+}
+
 /* Traces the path from the root to a leaf, searching by key
  * Returns the leaf page's page number containing the given key.
  */
@@ -126,16 +133,20 @@ int db_find(int64_t key, char* ret_val) {
     pagenum_t leaf_num = find_leaf(header_page.header.root_page_number, key);
     page_t leaf;
 
+    // leaf not found
     if (leaf_num == 0) return NOT_FOUND;
 
     file_read_page(leaf_num, &leaf);
     
+    // search key in the leaf
     for (i = 0; i < leaf.node.number_of_keys; i++) {
         if (leaf.node.key_values[i].key == key) break;
     }
     
+    // value not found
     if (i == leaf.node.number_of_keys) return NOT_FOUND;
     
+    // copy value into ret_val
     strcpy(ret_val, leaf.node.key_values[i].value);
     return 0;
 }
@@ -159,6 +170,7 @@ pagenum_t start_new_tree(int64_t key, char* value) {
     root.node.key_values[0].key = key;
     strcpy(root.node.key_values[0].value, value);
     root.node.number_of_keys++;
+
     file_write_page(root_num, &root);
     return root_num;
 }
@@ -176,6 +188,8 @@ pagenum_t insert_into_new_root(pagenum_t left_num, page_t* left,
     root.node.one_more_page_number = left_num;
     root.node.key_page_numbers[0].page_number = right_num;
     root.node.number_of_keys++;
+
+    // set parent numbers
     left->node.parent_page_number = root_num;
     right->node.parent_page_number = root_num;
 
@@ -186,7 +200,6 @@ pagenum_t insert_into_new_root(pagenum_t left_num, page_t* left,
     return root_num;
 }
 
-// TODO
 /* Helper function used in insert_into_parent
  * to find the index of the parent's pointer to
  * the node to the left of the key to be inserted.
@@ -195,7 +208,6 @@ int get_left_index(page_t* parent, pagenum_t left_num) {
     if (parent->node.one_more_page_number == left_num) return 0;
 
     int left_index = 1;
-    // ???
     while (left_index <= parent->node.number_of_keys
            && parent->node.key_page_numbers[left_index - 1].page_number != left_num)
         left_index++;
@@ -212,7 +224,8 @@ void insert_into_node(page_t* parent,
     int i;
 
     for (i = parent->node.number_of_keys; i > left_index; i--) {
-        parent->node.key_page_numbers[i].page_number = parent->node.key_page_numbers[i - 1].page_number;
+        parent->node.key_page_numbers[i].page_number
+            = parent->node.key_page_numbers[i - 1].page_number;
         parent->node.key_page_numbers[i].key = parent->node.key_page_numbers[i - 1].key;
     }
     parent->node.key_page_numbers[left_index].page_number = right_num;
@@ -220,20 +233,21 @@ void insert_into_node(page_t* parent,
     parent->node.number_of_keys++;
 }
 
-// TODO
 /* Inserts a new key and pointer to a node
  * into a node, causing the node's size to exceed
  * the order, and causing the node to split into two.
  * returns root page's page number
  */
-pagenum_t insert_into_node_after_splitting(pagenum_t root_num, pagenum_t parent_num, page_t* parent, int left_index,
-                                           int key, pagenum_t right_num) {
+pagenum_t insert_into_node_after_splitting(pagenum_t root_num,
+                                           pagenum_t parent_num, page_t* parent,
+                                           int left_index, int key, pagenum_t right_num) {
     int i, j, split, k_prime;
     page_t new_parent, child;
     pagenum_t new_parent_num;
     int64_t temp_keys[249];
     pagenum_t temp_page_numbers[250];
 
+    // copy page numbers into temp arr
     temp_page_numbers[0] = parent->node.one_more_page_number;
     for (i = 0, j = left_index == 0 ? 2 : 1; i < parent->node.number_of_keys; i++, j++) {
         if (j == left_index + 1) j++;
@@ -245,12 +259,14 @@ pagenum_t insert_into_node_after_splitting(pagenum_t root_num, pagenum_t parent_
         temp_keys[j] = parent->node.key_page_numbers[i].key;
     }
 
+    // insert new key and page number
     temp_page_numbers[left_index + 1] = right_num;
     temp_keys[left_index] = key;
 
     split = cut(INTERNAL_ORDER);
     new_parent_num = make_node(&new_parent);
     
+    // copy from temp arr to old parent
     parent->node.one_more_page_number = temp_page_numbers[0];
     for (i = 0; i < split - 1; i++) {
         parent->node.key_page_numbers[i].page_number = temp_page_numbers[i + 1];
@@ -259,6 +275,7 @@ pagenum_t insert_into_node_after_splitting(pagenum_t root_num, pagenum_t parent_
     parent->node.number_of_keys = split - 1;
     k_prime = temp_keys[split - 1];
 
+    // copy from temp arr to new parent
     new_parent.node.one_more_page_number = temp_page_numbers[++i];
     for (++i, j = 0; i < INTERNAL_ORDER; i++, j++) {
         new_parent.node.key_page_numbers[j].page_number = temp_page_numbers[i + 1];
@@ -267,17 +284,17 @@ pagenum_t insert_into_node_after_splitting(pagenum_t root_num, pagenum_t parent_
     new_parent.node.number_of_keys = INTERNAL_ORDER - split;
     new_parent.node.parent_page_number = parent->node.parent_page_number;
 
+    // set parent node number of first child
     file_read_page(new_parent.node.one_more_page_number, &child);
     child.node.parent_page_number = new_parent_num;
     file_write_page(new_parent.node.one_more_page_number, &child);
+
+    // set parent node number of other children
     for (i = 0; i < new_parent.node.number_of_keys - 1; i++) {
         file_read_page(new_parent.node.key_page_numbers[i].page_number, &child);
         child.node.parent_page_number = new_parent_num;
         file_write_page(new_parent.node.key_page_numbers[i].page_number, &child);
     }
-
-    file_write_page(parent_num, parent);
-    file_write_page(new_parent_num, &new_parent);
 
     return insert_into_parent(root_num, parent_num, parent, k_prime, new_parent_num, &new_parent);
 }
@@ -290,6 +307,7 @@ pagenum_t insert_into_parent(pagenum_t root_num, pagenum_t left_num, page_t* lef
     int left_index;
     pagenum_t parent_num = left->node.parent_page_number;
 
+    // case: left is root
     if (parent_num == 0) {
         return insert_into_new_root(left_num, left, key, right_num, right);
     }
@@ -306,7 +324,8 @@ pagenum_t insert_into_parent(pagenum_t root_num, pagenum_t left_num, page_t* lef
         return root_num;
     }
 
-    return insert_into_node_after_splitting(root_num, parent_num, &parent, left_index, key, right_num);
+    return insert_into_node_after_splitting(root_num, parent_num, &parent,
+                                            left_index, key, right_num);
 }
 
 /* Inserts a new pointer to a record and its corresponding key into a leaf.
@@ -328,15 +347,9 @@ void insert_into_leaf(pagenum_t leaf_num, page_t* leaf, int64_t key, char* value
     file_write_page(leaf_num, leaf);
 }
 
-int cut(int len) {
-    return len % 2 == 0 ? len / 2 : len / 2 + 1;
-}
-
-// TODOTODOTODOTODOTODOTODOTODOTODOTODO
 /* Inserts a new key and pointer
  * to a new record into a leaf so as to exceed
- * the tree's order, causing the leaf to be split
- * in half.
+ * the tree's order, causing the leaf to be split in half.
  */
 pagenum_t insert_into_leaf_after_splitting(pagenum_t root_num, pagenum_t leaf_num, page_t* leaf,
                                       int64_t key, char* value) {
@@ -396,6 +409,7 @@ int db_insert(int64_t key, char* value) {
 
     file_read_page(0, &header_page);
     
+    // case: file has no root page
     if (header_page.header.root_page_number == 0) {
         header_page.header.root_page_number = start_new_tree(key, value);
         file_write_page(0, &header_page);
