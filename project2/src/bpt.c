@@ -453,6 +453,50 @@ int db_insert(int64_t key, char* value) {
     return 0;
 }
 
+//TODO
+page_t remove_entry_from_node(page_t* node, int64_t key, char* value) {
+
+}
+
+//TODO
+pagenum_t adjust_root(pagenum_t root_num) {
+
+}
+
+//TODO
+/* Utility function for deletion.  Retrieves
+ * the index of a node's nearest neighbor (sibling)
+ * to the left if one exists.  If not (the node
+ * is the leftmost child), returns -1 to signify
+ * this special case.
+ */
+int get_neighbor_index(page_t* parent, page_t* node) {
+
+}
+
+// TODO
+/* Coalesces a node that has become
+ * too small after deletion
+ * with a neighboring node that
+ * can accept the additional entries
+ * without exceeding the maximum.
+ * returns root page's page number.
+ */
+pagenum_t coalesce_nodes(pagenum_t root_num, page_t* node, page_t* neighbor, int neighbor_index, int k_prime) {
+
+}
+
+//TODO
+/* Redistributes entries between two nodes when
+ * one has become too small after deletion
+ * but its neighbor is too big to append the
+ * small node's entries without exceeding the maximum
+ * returns root page's page number.
+ */
+pagenum_t redistribute_nodes(pagenum_t root, page_t* node, page_t* neighbor, int neighbor_index, int k_prime_index, int k_prime) {
+
+}
+
 /* Deletes an entry from the B+ tree.
  * Removes the record and its key and pointer
  * from the leaf, and then makes all appropriate
@@ -460,16 +504,49 @@ int db_insert(int64_t key, char* value) {
  * returns root page's page number after deletion.
  */
 pagenum_t delete_entry(pagenum_t root_num, pagenum_t node_num, int64_t key, char* value) {
-    // 하기 싫어...
     int min_keys;
-    pagenum_t neighbor_num;
+    pagenum_t neighbor_num, parent_num;
     int neighbor_index;
     int k_prime_index, k_prime;
     int capacity;
+    page_t node, neighbor, parent;
+    file_read_page(node_num, &node);
+    
+    node = remove_entry_from_node(&node, key, value);
 
+    if (root_num == node_num)
+        return adjust_root(root_num);
 
+    min_keys = node.node.is_leaf ? cut(LEAF_ORDER - 1) : cut(INTERNAL_ORDER) - 1;
 
-    return root_num;
+    if (node.node.number_of_keys >= min_keys)
+        return root_num;
+
+    parent_num = node.node.parent_page_number;
+    file_read_page(parent_num, &parent);
+    
+    neighbor_index = get_neighbor_index(&parent, &node);
+    k_prime_index = neighbor_index == -1 ? 0 : neighbor_index;
+    k_prime = parent.node.key_page_numbers[k_prime_index].key;
+    switch (neighbor_index) {
+        case -1:
+            neighbor_num = parent.node.key_page_numbers[0].page_number;
+            break;
+        case 0:
+            neighbor_num = parent.node.one_more_page_number;
+            break;
+        default:
+            neighbor_num = parent.node.key_page_numbers[neighbor_index - 1].page_number;
+            break;
+    }
+    file_read_page(neighbor_num, &neighbor);
+    capacity = node.node.is_leaf ? LEAF_ORDER : INTERNAL_ORDER - 1;
+    
+    if (neighbor.node.number_of_keys + node.node.number_of_keys < capacity)
+        return coalesce_nodes(root_num, &node, &neighbor, neighbor_index, k_prime);
+    
+    else
+        return redistribute_nodes(root_num, &node, &neighbor, neighbor_index, k_prime_index, k_prime);
 }
 
 /* Find the matching record and delete it if found.
