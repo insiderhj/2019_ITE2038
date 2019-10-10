@@ -302,7 +302,7 @@ pagenum_t insert_into_node_after_splitting(pagenum_t root_num,
  * Returns the root page's page number after insertion.
  */
 pagenum_t insert_into_parent(pagenum_t root_num, pagenum_t left_num, page_t* left,
-                             int key, pagenum_t right_num, page_t* right) {
+                             int64_t key, pagenum_t right_num, page_t* right) {
     int left_index;
     pagenum_t parent_num = left->node.parent_page_number;
 

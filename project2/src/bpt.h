@@ -117,16 +117,17 @@ int db_find(int64_t key, char* ret_val);
 // insert
 pagenum_t make_node(page_t* node);
 pagenum_t start_new_tree(int64_t key, char* value);
-pagenum_t insert_into_new_root(pagenum_t left_num, page_t* left, int key, pagenum_t right_num, page_t* right);
+pagenum_t insert_into_new_root(pagenum_t left_num, page_t* left, int64_t key, pagenum_t right_num, page_t* right);
 int get_left_index(page_t* parent, pagenum_t left_num);
-void insert_into_node(page_t* parent, int left_index, int key, pagenum_t right_num);
-pagenum_t insert_into_node_after_splitting(pagenum_t root_num, pagenum_t parent_num, page_t* parent, int left_index, int key, pagenum_t right_num);
-pagenum_t insert_into_parent(pagenum_t root_num, pagenum_t left_num, page_t* left, int key, pagenum_t right_num, page_t* right);
+void insert_into_node(page_t* parent, int left_index, int64_t key, pagenum_t right_num);
+pagenum_t insert_into_node_after_splitting(pagenum_t root_num, pagenum_t parent_num, page_t* parent, int left_index, int64_t key, pagenum_t right_num);
+pagenum_t insert_into_parent(pagenum_t root_num, pagenum_t left_num, page_t* left, int64_t key, pagenum_t right_num, page_t* right);
 void insert_into_leaf(pagenum_t leaf_num, page_t* leaf, int64_t key, char* value);
 pagenum_t insert_into_leaf_after_splitting(pagenum_t root_num, pagenum_t leaf_num, page_t* leaf, int64_t key, char* value);
 int db_insert(int64_t key, char* value);
 
 // delete
+pagenum_t delete_entry(pagenum_t root_num, pagenum_t node_num, int64_t key, char* value);
 int db_delete(int64_t key);
 
 extern int fd;
