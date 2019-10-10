@@ -3,6 +3,22 @@
 int fd;
 page_t header_page;
 
+void header_info() {
+    printf("free_page_number: %d\nnumber_of_pages: %d\nroot_page_number: %d\n", header_page.header.free_page_number, header_page.header.number_of_pages, header_page.header.root_page_number);
+}
+
+void free_page_info(page_t free_page) {
+    printf("next_free_page_number: %d\n", free_page.free.next_free_page_number);
+}
+
+void leaf_node_info(page_t leaf) {
+    printf("is_leaf: %d\nnumber_of_keys: %d\nparent_page_number: %d\nright_sibling_page_number: %d\n", leaf.node.is_leaf, leaf.node.number_of_keys, leaf.node.parent_page_number, leaf.node.right_sibling_page_number);
+}
+
+void internal_node_info(page_t node) {
+    printf("is_leaf: %d\nnumber_of_keys: %d\nparent_page_number: %d\n", node.node.is_leaf, node.node.number_of_keys, node.node.parent_page_number);
+}
+
 /* Allocate an on-disk page from the free page list
  */
 pagenum_t file_alloc_page() {
@@ -116,7 +132,9 @@ pagenum_t find_leaf(pagenum_t root_num, int64_t key) {
             else break;
         }
         if (i == 0) c_num = c.node.one_more_page_number;
-        else c_num = c.node.key_page_numbers[i - 1].page_number;
+        else {
+            c_num = c.node.key_page_numbers[i - 1].page_number;
+        }
         file_read_page(c_num, &c);
     }
     return c_num;
@@ -276,7 +294,7 @@ pagenum_t insert_into_node_after_splitting(pagenum_t root_num,
 
     // copy from temp arr to new parent
     new_parent.node.one_more_page_number = temp_page_numbers[++i];
-    for (++i, j = 0; i < INTERNAL_ORDER; i++, j++) {
+    for (i, j = 0; i < INTERNAL_ORDER; i++, j++) {
         new_parent.node.key_page_numbers[j].page_number = temp_page_numbers[i + 1];
         new_parent.node.key_page_numbers[j].key = temp_keys[i];
     }
@@ -294,6 +312,9 @@ pagenum_t insert_into_node_after_splitting(pagenum_t root_num,
         child.node.parent_page_number = new_parent_num;
         file_write_page(new_parent.node.key_page_numbers[i].page_number, &child);
     }
+
+    file_write_page(parent_num, parent);
+    file_write_page(new_parent_num, &new_parent);
 
     return insert_into_parent(root_num, parent_num, parent, k_prime, new_parent_num, &new_parent);
 }
@@ -394,6 +415,9 @@ pagenum_t insert_into_leaf_after_splitting(pagenum_t root_num, pagenum_t leaf_nu
     new_leaf.node.parent_page_number = leaf->node.parent_page_number;
     new_key = new_leaf.node.key_values[0].key;
 
+    file_write_page(leaf_num, leaf);
+    file_write_page(new_leaf_num, &new_leaf);
+
     return insert_into_parent(root_num, leaf_num, leaf, new_key, new_leaf_num, &new_leaf);
 }
 
@@ -437,6 +461,14 @@ int db_insert(int64_t key, char* value) {
  */
 pagenum_t delete_entry(pagenum_t root_num, pagenum_t node_num, int64_t key, char* value) {
     // 하기 싫어...
+    int min_keys;
+    pagenum_t neighbor_num;
+    int neighbor_index;
+    int k_prime_index, k_prime;
+    int capacity;
+
+
+
     return root_num;
 }
 

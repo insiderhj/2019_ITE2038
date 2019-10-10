@@ -131,5 +131,6 @@ pagenum_t delete_entry(pagenum_t root_num, pagenum_t node_num, int64_t key, char
 int db_delete(int64_t key);
 
 extern int fd;
+extern page_t header_page;
 
 #endif

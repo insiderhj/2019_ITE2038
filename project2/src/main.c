@@ -30,6 +30,9 @@ int main( int argc, char ** argv ) {
                 }   
                 break;
             case 'f':
+                scanf("%ld", &key);
+                db_find(key, value);
+                printf("%d: %s\n", key, value);
                 break;
             case 'q':
                 while (getchar() != (int)'\n');
