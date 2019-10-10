@@ -100,9 +100,9 @@ int cut(int len) {
 /* Traces the path from the root to a leaf, searching by key
  * Returns the leaf page's page number containing the given key.
  */
-pagenum_t find_leaf(pagenum_t root, int64_t key) {
+pagenum_t find_leaf(pagenum_t root_num, int64_t key) {
     int i;
-    pagenum_t c_num = root;
+    pagenum_t c_num = root_num;
     page_t c;
     file_read_page(c_num, &c);
 
@@ -356,7 +356,7 @@ pagenum_t insert_into_leaf_after_splitting(pagenum_t root_num, pagenum_t leaf_nu
     page_t new_leaf;
     pagenum_t new_leaf_num;
     int temp_keys[LEAF_ORDER];
-    char temp_values[120][LEAF_ORDER];
+    char temp_values[VALUE_SIZE][LEAF_ORDER];
     int insertion_index, split, new_key, i, j;
 
     new_leaf_num = make_node(&new_leaf);
@@ -402,7 +402,7 @@ pagenum_t insert_into_leaf_after_splitting(pagenum_t root_num, pagenum_t leaf_nu
  * If success, return 0. Otherwise, return non-zero value.
  */
 int db_insert(int64_t key, char* value) {
-    char res[120];
+    char res[VALUE_SIZE];
     
     if (fd == 0) return BAD_REQUEST;
     if (db_find(key, res) == 0) return CONFLICT;
@@ -430,6 +430,30 @@ int db_insert(int64_t key, char* value) {
     return 0;
 }
 
+/* Deletes an entry from the B+ tree.
+ * Removes the record and its key and pointer
+ * from the leaf, and then makes all appropriate
+ * changes to preserve the B+ tree properties.
+ * returns root page's page number after deletion.
+ */
+pagenum_t delete_entry(pagenum_t root_num, pagenum_t node_num, int64_t key, char* value) {
+    
+}
+
+/* Find the matching record and delete it if found.
+ * If success, return 0. Otherwise, return non-zero value.
+ */
 int db_delete(int64_t key) {
+    file_read_page(0, &header_page);
+    pagenum_t leaf_num;
+    char value[VALUE_SIZE];
+
+    leaf_num = find_leaf(header_page.header.root_page_number, key);
+    // no root or no such key
+    if (leaf_num == 0 || db_find(key, value) == NOT_FOUND) return NOT_FOUND;
+
+    header_page.header.root_page_number = delete_entry(header_page.header.root_page_number,
+                                                        leaf_num, key, value);
+    file_write_page(0, &header_page);
     return 0;
 }

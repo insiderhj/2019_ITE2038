@@ -3,7 +3,7 @@
 int main( int argc, char ** argv ) {
     char instruction;
     int64_t key;
-    char value[120];
+    char value[VALUE_SIZE];
     open_table("database");
 
     
@@ -17,7 +17,6 @@ int main( int argc, char ** argv ) {
             case 'i':
                 scanf("%ld %s", &key, value);
                 db_insert(key, value);
-                printf("%ld inserted\n", key);
                 break;
             case 'c':
                 for (int i = 1; i <= 4000; i++) {

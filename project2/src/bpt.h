@@ -14,6 +14,7 @@
 #define OFF(pagenum) ((pagenum) * PAGE_SIZE)
 #define INTERNAL_ORDER 249
 #define LEAF_ORDER 32
+#define VALUE_SIZE 120
 
 // err numbers
 #define BAD_REQUEST -400
@@ -34,7 +35,7 @@ typedef struct page_t page_t;
  */
 struct key_value_t {
     int64_t key;
-    char value[120];
+    char value[VALUE_SIZE];
 };
 
 /* key, page_number type for internal node
@@ -82,8 +83,8 @@ struct node_page_t {
      * key_page_numbers for internal node
      */
     union {
-        key_value_t key_values[31];
-        key_page_t key_page_numbers[248];
+        key_value_t key_values[LEAF_ORDER - 1];
+        key_page_t key_page_numbers[INTERNAL_ORDER - 1];
     };
 };
 
