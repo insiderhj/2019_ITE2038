@@ -19,7 +19,7 @@ int main( int argc, char ** argv ) {
                 db_insert(key, value);
                 break;
             case 'c':
-                for (int i = 1; i <= 4000; i++) {
+                for (int i = 1; i <= 33; i++) {
                     int num = i;
                     for (int j = 0; j < 4; j++) {
                         value[j] = '0' + num % 10;

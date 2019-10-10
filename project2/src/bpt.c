@@ -383,7 +383,7 @@ pagenum_t insert_into_leaf_after_splitting(pagenum_t root_num, pagenum_t leaf_nu
     new_leaf.node.is_leaf = true;
 
     insertion_index = 0;
-    while (insertion_index < LEAF_ORDER - 1 && leaf->node.key_values[insertion_index].key) {
+    while (insertion_index < LEAF_ORDER - 1 && leaf->node.key_values[insertion_index].key < key) {
             insertion_index++;
     }
     for (i = 0, j = 0; i < leaf->node.number_of_keys; i++, j++) {
@@ -453,9 +453,29 @@ int db_insert(int64_t key, char* value) {
     return 0;
 }
 
-//TODO
-page_t remove_entry_from_node(page_t* node, int64_t key, char* value) {
+void remove_entry_from_leaf(page_t* node, int64_t key) {
+    int i;
+    i = 0;
 
+    while (node->node.key_values[i].key != key) i++;
+    for (++i; i < node->node.number_of_keys; i++) {
+        node->node.key_values[i - 1].key = node->node.key_values[i].key;
+        strcpy(node->node.key_values[i - 1].value, node->node.key_values[i].value);
+    }
+    node->node.number_of_keys--;
+}
+
+//TODO
+page_t remove_entry_from_node(page_t* node, int64_t key) {
+    int i;
+    i = 0;
+
+    while (node->node.key_values[i].key != key) i++;
+    for (++i; i < node->node.number_of_keys; i++) {
+        node->node.key_page_numbers[i - 1].key = node->node.key_page_numbers[i].key;
+        node->node.key_page_numbers[i - 1].page_number = node->node.key_page_numbers[i].page_number;
+    }
+    node->node.number_of_keys--;
 }
 
 //TODO
@@ -512,16 +532,21 @@ pagenum_t delete_entry(pagenum_t root_num, pagenum_t node_num, int64_t key, char
     page_t node, neighbor, parent;
     file_read_page(node_num, &node);
     
-    node = remove_entry_from_node(&node, key, value);
+    if (node.node.is_leaf) remove_entry_from_leaf(&node, key);
+    else remove_entry_from_node(&node, key);
+    file_write_page(node_num, &node);
 
+    // case: node is root
     if (root_num == node_num)
         return adjust_root(root_num);
 
     min_keys = node.node.is_leaf ? cut(LEAF_ORDER - 1) : cut(INTERNAL_ORDER) - 1;
 
+    // case: number of keys is greater than or equal to min_keys
     if (node.node.number_of_keys >= min_keys)
         return root_num;
 
+    // case: number of keys is lower than min_keys
     parent_num = node.node.parent_page_number;
     file_read_page(parent_num, &parent);
     
