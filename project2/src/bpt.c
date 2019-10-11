@@ -775,10 +775,10 @@ void enqueue(Queue* q, pagenum_t data) {
 }
 
 pagenum_t dequeue(Queue* q) {
-    int data = q->pages[q->head++];
+    int data = q->pages[q->front++];
 	
-    if(q->head == QUEUE_SIZE) {
-        q->head = 0;
+    if(q->front == QUEUE_SIZE) {
+        q->front = 0;
     }
 	
     q->item_count--;
@@ -792,30 +792,34 @@ void print_tree() {
     page_t tmp;
     int64_t enter_key = 0;
 
-    q.head = 0;
+    q.front = 0;
     q.rear = -1;
     q.item_count = 0;
 
     file_read_page(0, &header_page);
     tmp_num = header_page.header.root_page_number;
     
+    // case: no root
     if (tmp_num == 0) {
         printf("empty tree\n");
         return;
     }
 
+    // enqueue root number
     enqueue(&q, tmp_num);
 
     while (q.item_count != 0) {
         tmp_num = dequeue(&q);
         file_read_page(tmp_num, &tmp);
         
+        // case: leaf node
         if (tmp.node.is_leaf) {
             for (i = 0; i < tmp.node.number_of_keys; i++) {
                 printf("%d ", tmp.node.key_values[i].key);
             }
             printf("| ");
 
+            // case: last leaf
             if (tmp.node.key_values[0].key >= enter_key) printf("\n");
         }
         else {
@@ -826,6 +830,7 @@ void print_tree() {
             }
             printf("| ");
 
+            // case: last node in the level
             if (tmp.node.key_page_numbers[0].key >= enter_key) {
                 printf("\n");
                 enter_key = tmp.node.key_page_numbers[tmp.node.number_of_keys - 1].key;

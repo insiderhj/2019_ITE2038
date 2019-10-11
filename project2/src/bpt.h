@@ -102,7 +102,7 @@ struct page_t {
 };
 
 struct Queue {
-    int head, rear;
+    int front, rear;
     int item_count;
     pagenum_t pages[QUEUE_SIZE];
 };
