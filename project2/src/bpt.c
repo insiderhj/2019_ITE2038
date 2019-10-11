@@ -246,8 +246,8 @@ void insert_into_node(page_t* parent, int left_index, int64_t key, pagenum_t rig
     int i;
 
     for (i = parent->node.number_of_keys; i > left_index; i--) {
-        parent->node.key_page_numbers[i].page_number
-            = parent->node.key_page_numbers[i - 1].page_number;
+        parent->node.key_page_numbers[i].page_number =
+            parent->node.key_page_numbers[i - 1].page_number;
         parent->node.key_page_numbers[i].key = parent->node.key_page_numbers[i - 1].key;
     }
     parent->node.key_page_numbers[left_index].page_number = right_num;
@@ -299,7 +299,7 @@ pagenum_t insert_into_node_after_splitting(pagenum_t root_num,
 
     // copy from temp arr to new parent
     new_parent.node.one_more_page_number = temp_page_numbers[++i];
-    for (i, j = 0; i < INTERNAL_ORDER; i++, j++) {
+    for (j = 0; i < INTERNAL_ORDER; i++, j++) {
         new_parent.node.key_page_numbers[j].page_number = temp_page_numbers[i + 1];
         new_parent.node.key_page_numbers[j].key = temp_keys[i];
     }
@@ -470,14 +470,11 @@ void remove_entry_from_leaf(page_t* node, int64_t key) {
     node->node.number_of_keys--;
 }
 
-page_t remove_entry_from_node(page_t* node, int64_t key) {
+void remove_entry_from_node(page_t* node, int64_t key) {
     int i;
     i = 0;
 
-    while (node->node.key_values[i].key != key) {
-        printf("node->key: %d, key: %d\n", node->node.key_values[i].key, key);
-        i++;
-    }
+    while (node->node.key_values[i].key != key) i++;
     for (++i; i < node->node.number_of_keys; i++) {
         node->node.key_page_numbers[i - 1].key = node->node.key_page_numbers[i].key;
         node->node.key_page_numbers[i - 1].page_number =
@@ -524,6 +521,7 @@ int get_neighbor_index(page_t* parent, pagenum_t node_num) {
         if (parent->node.key_page_numbers[i].page_number == node_num)
             return i;
     }
+    return NOT_FOUND;
 }
 
 /* Coalesces a node that has become
@@ -593,16 +591,89 @@ pagenum_t coalesce_nodes(pagenum_t root_num, pagenum_t node_num, page_t* node,
     return root_num;
 }
 
-//TODO
 /* Redistributes entries between two nodes when
  * one has become too small after deletion
  * but its neighbor is too big to append the
  * small node's entries without exceeding the maximum
- * returns root page's page number.
  */
-pagenum_t redistribute_nodes(pagenum_t root, page_t* node, page_t* neighbor,
-                             int neighbor_index, int k_prime_index, int k_prime) {
+void redistribute_nodes(pagenum_t node_num, page_t* node, pagenum_t neighbor_num, page_t* neighbor,
+                        int neighbor_index, int k_prime_index, int k_prime) {
     int i;
+    page_t tmp, parent;
+    file_read_page(node->node.parent_page_number, &parent);
+
+    // case: node is the leftmost child
+    if (neighbor_index == -1) {
+        // case: leaf node
+        if (node->node.is_leaf) {
+            node->node.key_values[node->node.number_of_keys].key =
+                neighbor->node.key_values[0].key;
+            strcpy(node->node.key_values[node->node.number_of_keys].value,
+                   neighbor->node.key_values[0].value);
+
+            parent.node.key_page_numbers[k_prime_index].key = neighbor->node.key_values[1].key;
+
+            for (i = 0; i < neighbor->node.number_of_keys - 1; i++) {
+                neighbor->node.key_values[i].key = neighbor->node.key_values[i + 1].key;
+                strcpy(neighbor->node.key_values[i].value, neighbor->node.key_values[i + 1].value);
+            }
+        }
+
+        // case: internal node
+        else {
+            node->node.key_page_numbers[node->node.number_of_keys].key = k_prime;
+            node->node.key_page_numbers[node->node.number_of_keys].page_number = neighbor->node.one_more_page_number;
+
+            file_read_page(node->node.number_of_keys, &tmp);
+            tmp.node.parent_page_number = node_num;
+            file_write_page(node->node.number_of_keys, &tmp);
+            parent.node.key_page_numbers[k_prime_index].key = neighbor->node.key_page_numbers[0].key;
+            
+            neighbor->node.one_more_page_number = neighbor->node.key_page_numbers[0].page_number;
+            for (i = 0; i < neighbor->node.number_of_keys - 1; i++) {
+                neighbor->node.key_page_numbers[i].key = neighbor->node.key_page_numbers[i + 1].key;
+                neighbor->node.key_page_numbers[i].page_number = neighbor->node.key_page_numbers[i + 1].page_number;
+            }
+        }
+    }
+
+    // case: n has a neighbor to the left
+    else {
+        // case: leaf node
+        if (node->node.is_leaf) {
+            for (i = node->node.number_of_keys; i > 0; i--) {
+                node->node.key_values[i].key = node->node.key_values[i - 1].key;
+                strcpy(node->node.key_values[i].value, node->node.key_values[i - 1].value);
+            }
+            node->node.key_values[0].key = neighbor->node.key_values[neighbor->node.number_of_keys - 1].key;
+            strcpy(node->node.key_values[0].value, neighbor->node.key_values[neighbor->node.number_of_keys - 1].value);
+            parent.node.key_page_numbers[k_prime_index].key = node->node.key_values[0].key;
+        }
+
+        // case: internal node
+        else {
+            for (i = node->node.number_of_keys; i > 0; i--) {
+                node->node.key_page_numbers[i].key = node->node.key_page_numbers[i - 1].key;
+                node->node.key_page_numbers[i].page_number = node->node.key_page_numbers[i - 1].page_number;
+            }
+            node->node.key_page_numbers[0].page_number = node->node.one_more_page_number;
+
+            node->node.one_more_page_number = neighbor->node.key_page_numbers[neighbor->node.number_of_keys - 1].page_number;
+            
+            file_read_page(node->node.one_more_page_number, &tmp);
+            tmp.node.parent_page_number = node_num;
+            file_write_page(node->node.one_more_page_number, &tmp);
+            
+            node->node.key_page_numbers[0].key = k_prime;
+            parent.node.key_page_numbers[k_prime_index].key = neighbor->node.key_page_numbers[neighbor->node.number_of_keys - 1].key;
+        }
+    }
+    node->node.number_of_keys++;
+    neighbor->node.number_of_keys--;
+
+    file_write_page(node_num, node);
+    file_write_page(neighbor_num, neighbor);
+    file_write_page(node->node.parent_page_number, &parent);
 }
 
 /* Deletes an entry from the B+ tree.
@@ -659,9 +730,11 @@ pagenum_t delete_entry(pagenum_t root_num, pagenum_t node_num, int64_t key) {
         return coalesce_nodes(root_num, node_num, &node, neighbor_num, &neighbor,
                               neighbor_index, k_prime);
     
-    else
-        return redistribute_nodes(root_num, &node, &neighbor, neighbor_index,
+    else {
+        redistribute_nodes(node_num, &node, neighbor_num, &neighbor, neighbor_index,
                                   k_prime_index, k_prime);
+        return root_num;
+    }
 }
 
 /* Find the matching record and delete it if found.

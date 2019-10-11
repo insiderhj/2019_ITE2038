@@ -31,8 +31,8 @@ int main( int argc, char ** argv ) {
                 break;
             case 'f':
                 scanf("%ld", &key);
-                db_find(key, value);
-                printf("%d: %s\n", key, value);
+                if (db_find(key, value) == NOT_FOUND) printf("key %d not found\n", key);
+                else printf("%d: %s\n", key, value);
                 break;
             case 'q':
                 while (getchar() != (int)'\n');
