@@ -16,6 +16,8 @@
 #define LEAF_ORDER 4
 #define VALUE_SIZE 120
 
+#define QUEUE_SIZE 1000
+
 // err numbers
 #define BAD_REQUEST -400
 #define NOT_FOUND -404
@@ -30,6 +32,7 @@ typedef struct header_page_t header_page_t;
 typedef struct free_page_t free_page_t;
 typedef struct node_page_t node_page_t;
 typedef struct page_t page_t;
+typedef struct Queue Queue;
 
 /* key, value type for leaf node
  */
@@ -98,6 +101,12 @@ struct page_t {
     };
 };
 
+struct Queue {
+    int head, rear;
+    int item_count;
+    pagenum_t pages[QUEUE_SIZE];
+};
+
 // file manager
 pagenum_t file_alloc_page();
 void file_free_page(pagenum_t pagenum);
@@ -143,6 +152,11 @@ void redistribute_nodes(pagenum_t node_num, page_t* node, pagenum_t neighbor_num
                         int neighbor_index, int k_prime_index, int k_prime);
 pagenum_t delete_entry(pagenum_t root_num, pagenum_t node_num, int64_t key);
 int db_delete(int64_t key);
+
+// print
+void enqueue(Queue* q, pagenum_t data);
+pagenum_t dequeue(Queue* q);
+void print_tree();
 
 extern int fd;
 extern page_t header_page;

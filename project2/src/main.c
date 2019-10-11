@@ -34,6 +34,9 @@ int main( int argc, char ** argv ) {
                 if (db_find(key, value) == NOT_FOUND) printf("key %d not found\n", key);
                 else printf("%d: %s\n", key, value);
                 break;
+            case 'p':
+                print_tree();
+                break;
             case 'q':
                 while (getchar() != (int)'\n');
                 return 0;

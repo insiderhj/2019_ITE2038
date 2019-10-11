@@ -763,3 +763,74 @@ int db_delete(int64_t key) {
     file_write_page(0, &header_page);
     return 0;
 }
+
+void enqueue(Queue* q, pagenum_t data) {
+    if(q->item_count != QUEUE_SIZE) {
+        if(q->rear == QUEUE_SIZE - 1) {
+            q->rear = -1;            
+        }       
+
+      q->pages[++q->rear] = data;
+      q->item_count++;
+   }
+}
+
+pagenum_t dequeue(Queue* q) {
+    int data = q->pages[q->head++];
+	
+    if(q->head == QUEUE_SIZE) {
+        q->head = 0;
+    }
+	
+    q->item_count--;
+    return data;  
+}
+
+void print_tree() {
+    Queue q;
+    int i;
+    pagenum_t tmp_num;
+    page_t tmp;
+    int64_t enter_key = 0;
+
+    q.head = 0;
+    q.rear = -1;
+    q.item_count = 0;
+
+    file_read_page(0, &header_page);
+    tmp_num = header_page.header.root_page_number;
+    
+    if (tmp_num == 0) {
+        printf("empty tree\n");
+        return;
+    }
+
+    enqueue(&q, tmp_num);
+
+    while (q.item_count != 0) {
+        tmp_num = dequeue(&q);
+        file_read_page(tmp_num, &tmp);
+        
+        if (tmp.node.is_leaf) {
+            for (i = 0; i < tmp.node.number_of_keys; i++) {
+                printf("%d ", tmp.node.key_values[i].key);
+            }
+            printf("| ");
+
+            if (tmp.node.key_values[0].key >= enter_key) printf("\n");
+        }
+        else {
+            enqueue(&q, tmp.node.one_more_page_number);
+            for (i = 0; i < tmp.node.number_of_keys; i++) {
+                printf("%d ", tmp.node.key_page_numbers[i].key);
+                enqueue(&q, tmp.node.key_page_numbers[i].page_number);
+            }
+            printf("| ");
+
+            if (tmp.node.key_page_numbers[0].key >= enter_key) {
+                printf("\n");
+                enter_key = tmp.node.key_page_numbers[tmp.node.number_of_keys - 1].key;
+            }
+        }
+    }
+}
