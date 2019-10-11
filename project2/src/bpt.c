@@ -576,7 +576,6 @@ pagenum_t coalesce_nodes(pagenum_t root_num, pagenum_t node_num, page_t* node,
 
     // case: leaf node
     else {
-        printf("leaf node\n");
         for (i = neighbor_insertion_index, j = 0; j < node->node.number_of_keys; i++, j++) {
             neighbor->node.key_values[i].key = node->node.key_values[j].key;
             strcpy(neighbor->node.key_values[i].value, node->node.key_values[j].value);
