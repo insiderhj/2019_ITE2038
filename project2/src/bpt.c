@@ -510,8 +510,13 @@ pagenum_t adjust_root(pagenum_t root_num) {
  * is the leftmost child), returns -1 to signify
  * this special case.
  */
-int get_neighbor_index(page_t* parent, page_t* node) {
-
+int get_neighbor_index(page_t* parent, pagenum_t node_num) {
+    int i;
+    if (parent->node.one_more_page_number == node_num) return -1; 
+    for (i = 0; i <= parent->node.number_of_keys; i++) {
+        if (parent->node.key_page_numbers[i].page_number == node_num)
+            return i;
+    }
 }
 
 // TODO
@@ -570,7 +575,7 @@ pagenum_t delete_entry(pagenum_t root_num, pagenum_t node_num, int64_t key, char
     parent_num = node.node.parent_page_number;
     file_read_page(parent_num, &parent);
     
-    neighbor_index = get_neighbor_index(&parent, &node);
+    neighbor_index = get_neighbor_index(&parent, node_num);
     k_prime_index = neighbor_index == -1 ? 0 : neighbor_index;
     k_prime = parent.node.key_page_numbers[k_prime_index].key;
     switch (neighbor_index) {
