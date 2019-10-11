@@ -4,7 +4,9 @@ int fd;
 page_t header_page;
 
 void header_info() {
-    printf("free_page_number: %d\nnumber_of_pages: %d\nroot_page_number: %d\n", header_page.header.free_page_number, header_page.header.number_of_pages, header_page.header.root_page_number);
+    printf("free_page_number: %d\nnumber_of_pages: %d\nroot_page_number: %d\n",
+           header_page.header.free_page_number, header_page.header.number_of_pages,
+           header_page.header.root_page_number);
 }
 
 void free_page_info(page_t free_page) {
@@ -12,11 +14,14 @@ void free_page_info(page_t free_page) {
 }
 
 void leaf_node_info(page_t leaf) {
-    printf("is_leaf: %d\nnumber_of_keys: %d\nparent_page_number: %d\nright_sibling_page_number: %d\n", leaf.node.is_leaf, leaf.node.number_of_keys, leaf.node.parent_page_number, leaf.node.right_sibling_page_number);
+    printf("is_leaf: %d\nnumber_of_keys: %d\nparent: %d\nsibling: %d\n",
+           leaf.node.is_leaf, leaf.node.number_of_keys, leaf.node.parent_page_number,
+           leaf.node.right_sibling_page_number);
 }
 
 void internal_node_info(page_t node) {
-    printf("is_leaf: %d\nnumber_of_keys: %d\nparent_page_number: %d\n", node.node.is_leaf, node.node.number_of_keys, node.node.parent_page_number);
+    printf("is_leaf: %d\nnumber_of_keys: %d\nparent_page_number: %d\n",
+           node.node.is_leaf, node.node.number_of_keys, node.node.parent_page_number);
 }
 
 /* Allocate an on-disk page from the free page list
@@ -475,12 +480,12 @@ page_t remove_entry_from_node(page_t* node, int64_t key) {
     }
     for (++i; i < node->node.number_of_keys; i++) {
         node->node.key_page_numbers[i - 1].key = node->node.key_page_numbers[i].key;
-        node->node.key_page_numbers[i - 1].page_number = node->node.key_page_numbers[i].page_number;
+        node->node.key_page_numbers[i - 1].page_number =
+            node->node.key_page_numbers[i].page_number;
     }
     node->node.number_of_keys--;
 }
 
-//TODO
 /* returns root page's page number
  */
 pagenum_t adjust_root(pagenum_t root_num) {
@@ -528,7 +533,9 @@ int get_neighbor_index(page_t* parent, pagenum_t node_num) {
  * without exceeding the maximum.
  * returns root page's page number.
  */
-pagenum_t coalesce_nodes(pagenum_t root_num, pagenum_t node_num, page_t* node, pagenum_t neighbor_num, page_t* neighbor, int neighbor_index, int k_prime) {
+pagenum_t coalesce_nodes(pagenum_t root_num, pagenum_t node_num, page_t* node,
+                         pagenum_t neighbor_num, page_t* neighbor,
+                         int neighbor_index, int k_prime) {
     int i, j, neighbor_insertion_index, node_end;
     pagenum_t tmp_num;
     page_t* tmp;
@@ -553,10 +560,12 @@ pagenum_t coalesce_nodes(pagenum_t root_num, pagenum_t node_num, page_t* node, p
 
         node_end = node->node.number_of_keys;
 
-        neighbor->node.key_page_numbers[neighbor_insertion_index].page_number = node->node.one_more_page_number;
+        neighbor->node.key_page_numbers[neighbor_insertion_index].page_number =
+            node->node.one_more_page_number;
         for (i = neighbor_insertion_index + 1, j = 0; j < node_end; i++, j++) {
             neighbor->node.key_page_numbers[i].key = node->node.key_page_numbers[j].key;
-            neighbor->node.key_page_numbers[i].page_number = node->node.key_page_numbers[j].page_number;
+            neighbor->node.key_page_numbers[i].page_number =
+                node->node.key_page_numbers[j].page_number;
         }
         neighbor->node.number_of_keys += node_end;
 
@@ -591,8 +600,9 @@ pagenum_t coalesce_nodes(pagenum_t root_num, pagenum_t node_num, page_t* node, p
  * small node's entries without exceeding the maximum
  * returns root page's page number.
  */
-pagenum_t redistribute_nodes(pagenum_t root, page_t* node, page_t* neighbor, int neighbor_index, int k_prime_index, int k_prime) {
-
+pagenum_t redistribute_nodes(pagenum_t root, page_t* node, page_t* neighbor,
+                             int neighbor_index, int k_prime_index, int k_prime) {
+    int i;
 }
 
 /* Deletes an entry from the B+ tree.
@@ -646,10 +656,12 @@ pagenum_t delete_entry(pagenum_t root_num, pagenum_t node_num, int64_t key) {
     capacity = node.node.is_leaf ? LEAF_ORDER : INTERNAL_ORDER - 1;
     
     if (neighbor.node.number_of_keys + node.node.number_of_keys < capacity)
-        return coalesce_nodes(root_num, node_num, &node, neighbor_num, &neighbor, neighbor_index, k_prime);
+        return coalesce_nodes(root_num, node_num, &node, neighbor_num, &neighbor,
+                              neighbor_index, k_prime);
     
     else
-        return redistribute_nodes(root_num, &node, &neighbor, neighbor_index, k_prime_index, k_prime);
+        return redistribute_nodes(root_num, &node, &neighbor, neighbor_index,
+                                  k_prime_index, k_prime);
 }
 
 /* Find the matching record and delete it if found.
