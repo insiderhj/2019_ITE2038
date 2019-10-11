@@ -622,17 +622,21 @@ void redistribute_nodes(pagenum_t node_num, page_t* node, pagenum_t neighbor_num
         // case: internal node
         else {
             node->node.key_page_numbers[node->node.number_of_keys].key = k_prime;
-            node->node.key_page_numbers[node->node.number_of_keys].page_number = neighbor->node.one_more_page_number;
+            node->node.key_page_numbers[node->node.number_of_keys].page_number =
+                neighbor->node.one_more_page_number;
 
             file_read_page(node->node.number_of_keys, &tmp);
             tmp.node.parent_page_number = node_num;
             file_write_page(node->node.number_of_keys, &tmp);
-            parent.node.key_page_numbers[k_prime_index].key = neighbor->node.key_page_numbers[0].key;
+            parent.node.key_page_numbers[k_prime_index].key =
+                neighbor->node.key_page_numbers[0].key;
             
             neighbor->node.one_more_page_number = neighbor->node.key_page_numbers[0].page_number;
             for (i = 0; i < neighbor->node.number_of_keys - 1; i++) {
-                neighbor->node.key_page_numbers[i].key = neighbor->node.key_page_numbers[i + 1].key;
-                neighbor->node.key_page_numbers[i].page_number = neighbor->node.key_page_numbers[i + 1].page_number;
+                neighbor->node.key_page_numbers[i].key =
+                    neighbor->node.key_page_numbers[i + 1].key;
+                neighbor->node.key_page_numbers[i].page_number =
+                    neighbor->node.key_page_numbers[i + 1].page_number;
             }
         }
     }
@@ -645,8 +649,10 @@ void redistribute_nodes(pagenum_t node_num, page_t* node, pagenum_t neighbor_num
                 node->node.key_values[i].key = node->node.key_values[i - 1].key;
                 strcpy(node->node.key_values[i].value, node->node.key_values[i - 1].value);
             }
-            node->node.key_values[0].key = neighbor->node.key_values[neighbor->node.number_of_keys - 1].key;
-            strcpy(node->node.key_values[0].value, neighbor->node.key_values[neighbor->node.number_of_keys - 1].value);
+            node->node.key_values[0].key =
+                neighbor->node.key_values[neighbor->node.number_of_keys - 1].key;
+            strcpy(node->node.key_values[0].value,
+                   neighbor->node.key_values[neighbor->node.number_of_keys - 1].value);
             parent.node.key_page_numbers[k_prime_index].key = node->node.key_values[0].key;
         }
 
@@ -654,18 +660,21 @@ void redistribute_nodes(pagenum_t node_num, page_t* node, pagenum_t neighbor_num
         else {
             for (i = node->node.number_of_keys; i > 0; i--) {
                 node->node.key_page_numbers[i].key = node->node.key_page_numbers[i - 1].key;
-                node->node.key_page_numbers[i].page_number = node->node.key_page_numbers[i - 1].page_number;
+                node->node.key_page_numbers[i].page_number =
+                    node->node.key_page_numbers[i - 1].page_number;
             }
             node->node.key_page_numbers[0].page_number = node->node.one_more_page_number;
 
-            node->node.one_more_page_number = neighbor->node.key_page_numbers[neighbor->node.number_of_keys - 1].page_number;
+            node->node.one_more_page_number =
+                neighbor->node.key_page_numbers[neighbor->node.number_of_keys - 1].page_number;
             
             file_read_page(node->node.one_more_page_number, &tmp);
             tmp.node.parent_page_number = node_num;
             file_write_page(node->node.one_more_page_number, &tmp);
             
             node->node.key_page_numbers[0].key = k_prime;
-            parent.node.key_page_numbers[k_prime_index].key = neighbor->node.key_page_numbers[neighbor->node.number_of_keys - 1].key;
+            parent.node.key_page_numbers[k_prime_index].key =
+                neighbor->node.key_page_numbers[neighbor->node.number_of_keys - 1].key;
         }
     }
     node->node.number_of_keys++;
