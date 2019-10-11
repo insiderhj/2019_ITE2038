@@ -12,8 +12,8 @@
 // page properties
 #define PAGE_SIZE 4096
 #define OFF(pagenum) ((pagenum) * PAGE_SIZE)
-#define INTERNAL_ORDER 249
-#define LEAF_ORDER 32
+#define INTERNAL_ORDER 4
+#define LEAF_ORDER 4
 #define VALUE_SIZE 120
 
 // err numbers
@@ -83,8 +83,8 @@ struct node_page_t {
      * key_page_numbers for internal node
      */
     union {
-        key_value_t key_values[LEAF_ORDER - 1];
-        key_page_t key_page_numbers[INTERNAL_ORDER - 1];
+        key_value_t key_values[31];
+        key_page_t key_page_numbers[248];
     };
 };
 
@@ -127,7 +127,7 @@ pagenum_t insert_into_leaf_after_splitting(pagenum_t root_num, pagenum_t leaf_nu
 int db_insert(int64_t key, char* value);
 
 // delete
-pagenum_t delete_entry(pagenum_t root_num, pagenum_t node_num, int64_t key, char* value);
+pagenum_t delete_entry(pagenum_t root_num, pagenum_t node_num, int64_t key);
 int db_delete(int64_t key);
 
 extern int fd;

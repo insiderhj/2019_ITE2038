@@ -465,12 +465,14 @@ void remove_entry_from_leaf(page_t* node, int64_t key) {
     node->node.number_of_keys--;
 }
 
-//TODO
 page_t remove_entry_from_node(page_t* node, int64_t key) {
     int i;
     i = 0;
 
-    while (node->node.key_values[i].key != key) i++;
+    while (node->node.key_values[i].key != key) {
+        printf("node->key: %d, key: %d\n", node->node.key_values[i].key, key);
+        i++;
+    }
     for (++i; i < node->node.number_of_keys; i++) {
         node->node.key_page_numbers[i - 1].key = node->node.key_page_numbers[i].key;
         node->node.key_page_numbers[i - 1].page_number = node->node.key_page_numbers[i].page_number;
@@ -494,6 +496,7 @@ pagenum_t adjust_root(pagenum_t root_num) {
         new_root_num = root.node.one_more_page_number;
         file_read_page(new_root_num, &new_root);
         new_root.node.parent_page_number = 0;
+        file_write_page(new_root_num, &new_root);
     }
     else {
         new_root_num = 0;
@@ -503,7 +506,6 @@ pagenum_t adjust_root(pagenum_t root_num) {
     return new_root_num;
 }
 
-//TODO
 /* Utility function for deletion.  Retrieves
  * the index of a node's nearest neighbor (sibling)
  * to the left if one exists.  If not (the node
@@ -519,7 +521,6 @@ int get_neighbor_index(page_t* parent, pagenum_t node_num) {
     }
 }
 
-// TODO
 /* Coalesces a node that has become
  * too small after deletion
  * with a neighboring node that
@@ -527,8 +528,60 @@ int get_neighbor_index(page_t* parent, pagenum_t node_num) {
  * without exceeding the maximum.
  * returns root page's page number.
  */
-pagenum_t coalesce_nodes(pagenum_t root_num, page_t* node, page_t* neighbor, int neighbor_index, int k_prime) {
+pagenum_t coalesce_nodes(pagenum_t root_num, pagenum_t node_num, page_t* node, pagenum_t neighbor_num, page_t* neighbor, int neighbor_index, int k_prime) {
+    int i, j, neighbor_insertion_index, node_end;
+    pagenum_t tmp_num;
+    page_t* tmp;
+    page_t child;
 
+    if (neighbor_index == -1) {
+        tmp = node;
+        node = neighbor;
+        neighbor = tmp;
+
+        tmp_num = node_num;
+        node_num = neighbor_num;
+        neighbor_num = tmp_num;
+    }
+    
+    neighbor_insertion_index = neighbor->node.number_of_keys;
+
+    // case: internal node
+    if (!node->node.is_leaf) {
+        neighbor->node.key_page_numbers[neighbor_insertion_index].key = k_prime;
+        neighbor->node.number_of_keys++;
+
+        node_end = node->node.number_of_keys;
+
+        neighbor->node.key_page_numbers[neighbor_insertion_index].page_number = node->node.one_more_page_number;
+        for (i = neighbor_insertion_index + 1, j = 0; j < node_end; i++, j++) {
+            neighbor->node.key_page_numbers[i].key = node->node.key_page_numbers[j].key;
+            neighbor->node.key_page_numbers[i].page_number = node->node.key_page_numbers[j].page_number;
+        }
+        neighbor->node.number_of_keys += node_end;
+
+        for (i = neighbor_insertion_index; i < neighbor->node.number_of_keys; i++) {
+            file_read_page(neighbor->node.key_page_numbers[i].page_number, &child);
+            child.node.parent_page_number = neighbor_num;
+            file_write_page(neighbor->node.key_page_numbers[i].page_number, &child);
+        }
+    }
+
+    // case: leaf node
+    else {
+        printf("leaf node\n");
+        for (i = neighbor_insertion_index, j = 0; j < node->node.number_of_keys; i++, j++) {
+            neighbor->node.key_values[i].key = node->node.key_values[j].key;
+            strcpy(neighbor->node.key_values[i].value, node->node.key_values[j].value);
+        }
+        neighbor->node.number_of_keys += node->node.number_of_keys;
+        neighbor->node.right_sibling_page_number = node->node.right_sibling_page_number;
+    }
+
+    file_write_page(neighbor_num, neighbor);
+    root_num = delete_entry(root_num, node->node.parent_page_number, k_prime);
+    file_free_page(node_num);
+    return root_num;
 }
 
 //TODO
@@ -548,7 +601,7 @@ pagenum_t redistribute_nodes(pagenum_t root, page_t* node, page_t* neighbor, int
  * changes to preserve the B+ tree properties.
  * returns root page's page number after deletion.
  */
-pagenum_t delete_entry(pagenum_t root_num, pagenum_t node_num, int64_t key, char* value) {
+pagenum_t delete_entry(pagenum_t root_num, pagenum_t node_num, int64_t key) {
     int min_keys;
     pagenum_t neighbor_num, parent_num;
     int neighbor_index;
@@ -593,7 +646,7 @@ pagenum_t delete_entry(pagenum_t root_num, pagenum_t node_num, int64_t key, char
     capacity = node.node.is_leaf ? LEAF_ORDER : INTERNAL_ORDER - 1;
     
     if (neighbor.node.number_of_keys + node.node.number_of_keys < capacity)
-        return coalesce_nodes(root_num, &node, &neighbor, neighbor_index, k_prime);
+        return coalesce_nodes(root_num, node_num, &node, neighbor_num, &neighbor, neighbor_index, k_prime);
     
     else
         return redistribute_nodes(root_num, &node, &neighbor, neighbor_index, k_prime_index, k_prime);
@@ -612,7 +665,7 @@ int db_delete(int64_t key) {
     if (leaf_num == 0 || db_find(key, value) == NOT_FOUND) return NOT_FOUND;
 
     header_page.header.root_page_number = delete_entry(header_page.header.root_page_number,
-                                                        leaf_num, key, value);
+                                                        leaf_num, key);
     file_write_page(0, &header_page);
     return 0;
 }
