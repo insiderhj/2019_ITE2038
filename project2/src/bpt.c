@@ -312,7 +312,7 @@ pagenum_t insert_into_node_after_splitting(pagenum_t root_num,
     file_write_page(new_parent.node.one_more_page_number, &child);
 
     // set parent node number of other children
-    for (i = 0; i < new_parent.node.number_of_keys - 1; i++) {
+    for (i = 0; i < new_parent.node.number_of_keys; i++) {
         file_read_page(new_parent.node.key_page_numbers[i].page_number, &child);
         child.node.parent_page_number = new_parent_num;
         file_write_page(new_parent.node.key_page_numbers[i].page_number, &child);
@@ -474,7 +474,7 @@ void remove_entry_from_node(page_t* node, int64_t key) {
     int i;
     i = 0;
 
-    while (node->node.key_values[i].key != key) i++;
+    while (node->node.key_page_numbers[i].key != key) i++;
     for (++i; i < node->node.number_of_keys; i++) {
         node->node.key_page_numbers[i - 1].key = node->node.key_page_numbers[i].key;
         node->node.key_page_numbers[i - 1].page_number =
@@ -691,6 +691,7 @@ void redistribute_nodes(pagenum_t node_num, page_t* node, pagenum_t neighbor_num
  * returns root page's page number after deletion.
  */
 pagenum_t delete_entry(pagenum_t root_num, pagenum_t node_num, int64_t key) {
+    printf("delete_entry\n");
     int min_keys;
     pagenum_t neighbor_num, parent_num;
     int neighbor_index;
