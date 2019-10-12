@@ -800,9 +800,6 @@ void print_tree() {
                 printf("%ld ", tmp.node.key_values[i].key);
             }
             printf("| ");
-
-            // case: last leaf
-            if (tmp.node.key_values[0].key >= enter_key) printf("\n");
         }
         else {
             enqueue(&q, tmp.node.one_more_page_number);
@@ -820,5 +817,6 @@ void print_tree() {
             }
         }
     }
+    printf("\n");
 }
 
