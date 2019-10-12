@@ -3,27 +3,6 @@
 int fd;
 page_t header_page;
 
-void header_info() {
-    printf("free_page_number: %d\nnumber_of_pages: %d\nroot_page_number: %d\n",
-           header_page.header.free_page_number, header_page.header.number_of_pages,
-           header_page.header.root_page_number);
-}
-
-void free_page_info(page_t free_page) {
-    printf("next_free_page_number: %d\n", free_page.free.next_free_page_number);
-}
-
-void leaf_node_info(page_t leaf) {
-    printf("is_leaf: %d\nnumber_of_keys: %d\nparent: %d\nsibling: %d\n",
-           leaf.node.is_leaf, leaf.node.number_of_keys, leaf.node.parent_page_number,
-           leaf.node.right_sibling_page_number);
-}
-
-void internal_node_info(page_t node) {
-    printf("is_leaf: %d\nnumber_of_keys: %d\nparent_page_number: %d\n",
-           node.node.is_leaf, node.node.number_of_keys, node.node.parent_page_number);
-}
-
 /* Allocate an on-disk page from the free page list
  */
 pagenum_t file_alloc_page() {
@@ -691,7 +670,6 @@ void redistribute_nodes(pagenum_t node_num, page_t* node, pagenum_t neighbor_num
  * returns root page's page number after deletion.
  */
 pagenum_t delete_entry(pagenum_t root_num, pagenum_t node_num, int64_t key) {
-    printf("delete_entry\n");
     int min_keys;
     pagenum_t neighbor_num, parent_num;
     int neighbor_index;
@@ -708,7 +686,8 @@ pagenum_t delete_entry(pagenum_t root_num, pagenum_t node_num, int64_t key) {
     if (root_num == node_num)
         return adjust_root(root_num);
 
-    min_keys = node.node.is_leaf ? cut(LEAF_ORDER - 1) : cut(INTERNAL_ORDER) - 1;
+    // min_keys = node.node.is_leaf ? cut(LEAF_ORDER - 1) : cut(INTERNAL_ORDER) - 1;
+    min_keys = 1;
 
     // case: number of keys is greater than or equal to min_keys
     if (node.node.number_of_keys >= min_keys)
@@ -816,7 +795,7 @@ void print_tree() {
         // case: leaf node
         if (tmp.node.is_leaf) {
             for (i = 0; i < tmp.node.number_of_keys; i++) {
-                printf("%d ", tmp.node.key_values[i].key);
+                printf("%lld ", tmp.node.key_values[i].key);
             }
             printf("| ");
 
@@ -826,7 +805,7 @@ void print_tree() {
         else {
             enqueue(&q, tmp.node.one_more_page_number);
             for (i = 0; i < tmp.node.number_of_keys; i++) {
-                printf("%d ", tmp.node.key_page_numbers[i].key);
+                printf("%lld ", tmp.node.key_page_numbers[i].key);
                 enqueue(&q, tmp.node.key_page_numbers[i].page_number);
             }
             printf("| ");
