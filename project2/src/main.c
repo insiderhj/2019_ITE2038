@@ -6,8 +6,6 @@ int main( int argc, char ** argv ) {
     char value[VALUE_SIZE];
     open_table("database_insiderhj");
 
-    value[0] = 'a';
-    value[1] = '\0';
     printf("> ");
     while (scanf("%c", &instruction) != EOF) {
         switch (instruction) {
@@ -19,7 +17,7 @@ int main( int argc, char ** argv ) {
                 scanf("%ld %s", &key, value);
                 db_insert(key, value);
                 break;
-            case 'f':
+	    case 'f':
                 scanf("%ld", &key);
                 if (db_find(key, value) == NOT_FOUND) printf("key %ld not found\n", key);
                 else printf("%ld: %s\n", key, value);
