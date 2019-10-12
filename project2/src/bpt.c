@@ -242,7 +242,8 @@ void insert_into_node(page_t* parent, int left_index, int64_t key, pagenum_t rig
 pagenum_t insert_into_node_after_splitting(pagenum_t root_num,
                                            pagenum_t parent_num, page_t* parent,
                                            int left_index, int64_t key, pagenum_t right_num) {
-    int i, j, split, k_prime;
+    int i, j, split;
+    int64_t k_prime;
     page_t new_parent, child;
     pagenum_t new_parent_num;
     int64_t temp_keys[249];
@@ -512,7 +513,7 @@ int get_neighbor_index(page_t* parent, pagenum_t node_num) {
  */
 pagenum_t coalesce_nodes(pagenum_t root_num, pagenum_t node_num, page_t* node,
                          pagenum_t neighbor_num, page_t* neighbor,
-                         int neighbor_index, int k_prime) {
+                         int neighbor_index, int64_t k_prime) {
     int i, j, neighbor_insertion_index, node_end;
     pagenum_t tmp_num;
     page_t* tmp;
@@ -575,7 +576,7 @@ pagenum_t coalesce_nodes(pagenum_t root_num, pagenum_t node_num, page_t* node,
  * small node's entries without exceeding the maximum
  */
 void redistribute_nodes(pagenum_t node_num, page_t* node, pagenum_t neighbor_num, page_t* neighbor,
-                        int neighbor_index, int k_prime_index, int k_prime) {
+                        int neighbor_index, int k_prime_index, int64_t k_prime) {
     int i;
     page_t tmp, parent;
     file_read_page(node->node.parent_page_number, &parent);
@@ -673,7 +674,8 @@ pagenum_t delete_entry(pagenum_t root_num, pagenum_t node_num, int64_t key) {
     int min_keys;
     pagenum_t neighbor_num, parent_num;
     int neighbor_index;
-    int k_prime_index, k_prime;
+    int k_prime_index;
+    int64_t k_prime;
     int capacity;
     page_t node, neighbor, parent;
     file_read_page(node_num, &node);

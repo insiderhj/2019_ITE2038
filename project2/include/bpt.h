@@ -147,9 +147,9 @@ pagenum_t adjust_root(pagenum_t root_num);
 int get_neighbor_index(page_t* parent, pagenum_t node_num);
 pagenum_t coalesce_nodes(pagenum_t root_num, pagenum_t node_num, page_t* node,
                          pagenum_t neighbor_num, page_t* neighbor, int neighbor_index,
-                         int k_prime);
+                         int64_t k_prime);
 void redistribute_nodes(pagenum_t node_num, page_t* node, pagenum_t neighbor_num, page_t* neighbor,
-                        int neighbor_index, int k_prime_index, int k_prime);
+                        int neighbor_index, int k_prime_index, int64_t k_prime);
 pagenum_t delete_entry(pagenum_t root_num, pagenum_t node_num, int64_t key);
 int db_delete(int64_t key);
 
