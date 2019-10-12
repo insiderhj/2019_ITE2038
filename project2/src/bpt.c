@@ -813,7 +813,8 @@ void print_tree() {
             printf("| ");
 
             // case: last node in the level
-            if (header_page.header.root_page_number == tmp_num || tmp.node.key_page_numbers[0].key >= enter_key) {
+            if (header_page.header.root_page_number == tmp_num ||
+                tmp.node.key_page_numbers[0].key >= enter_key) {
                 printf("\n");
                 enter_key = tmp.node.key_page_numbers[tmp.node.number_of_keys - 1].key;
             }
