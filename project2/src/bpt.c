@@ -797,7 +797,7 @@ void print_tree() {
         // case: leaf node
         if (tmp.node.is_leaf) {
             for (i = 0; i < tmp.node.number_of_keys; i++) {
-                printf("%lld ", tmp.node.key_values[i].key);
+                printf("%ld ", tmp.node.key_values[i].key);
             }
             printf("| ");
 
@@ -807,7 +807,7 @@ void print_tree() {
         else {
             enqueue(&q, tmp.node.one_more_page_number);
             for (i = 0; i < tmp.node.number_of_keys; i++) {
-                printf("%lld ", tmp.node.key_page_numbers[i].key);
+                printf("%ld ", tmp.node.key_page_numbers[i].key);
                 enqueue(&q, tmp.node.key_page_numbers[i].page_number);
             }
             printf("| ");

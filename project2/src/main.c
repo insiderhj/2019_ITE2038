@@ -12,17 +12,17 @@ int main( int argc, char ** argv ) {
     while (scanf("%c", &instruction) != EOF) {
         switch (instruction) {
             case 'd':
-                scanf("%lld", &key);
+                scanf("%ld", &key);
                 db_delete(key);
                 break;
             case 'i':
-                scanf("%lld %s", &key, value);
+                scanf("%ld %s", &key, value);
                 db_insert(key, value);
                 break;
             case 'f':
-                scanf("%lld", &key);
-                if (db_find(key, value) == NOT_FOUND) printf("key %lld not found\n", key);
-                else printf("%lld: %s\n", key, value);
+                scanf("%ld", &key);
+                if (db_find(key, value) == NOT_FOUND) printf("key %ld not found\n", key);
+                else printf("%ld: %s\n", key, value);
                 break;
             case 'p':
                 print_tree();
