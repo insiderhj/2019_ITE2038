@@ -361,7 +361,7 @@ pagenum_t insert_into_leaf_after_splitting(pagenum_t root_num, pagenum_t leaf_nu
     page_t new_leaf;
     pagenum_t new_leaf_num;
     int temp_keys[LEAF_ORDER];
-    char temp_values[VALUE_SIZE][LEAF_ORDER];
+    char temp_values[LEAF_ORDER][VALUE_SIZE];
     int insertion_index, split, new_key, i, j;
 
     new_leaf_num = make_node(&new_leaf);
