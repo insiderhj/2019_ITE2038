@@ -17,7 +17,7 @@ int main( int argc, char ** argv ) {
                 scanf("%ld %s", &key, value);
                 db_insert(key, value);
                 break;
-	    case 'f':
+	        case 'f':
                 scanf("%ld", &key);
                 if (db_find(key, value) == NOT_FOUND) printf("key %ld not found\n", key);
                 else printf("%ld: %s\n", key, value);
