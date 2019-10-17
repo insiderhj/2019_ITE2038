@@ -10,7 +10,7 @@
 #include <unistd.h>
 
 #include "types.h"
-#include "file_manager.h"
+#include "disk_manager.h"
 #include "buffer_manager.h"
 
 // open
