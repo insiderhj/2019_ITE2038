@@ -48,15 +48,15 @@ struct key_value_t {
  */
 struct key_page_t {
     int64_t key;
-    uint64_t page_number;
+    pagenum_t page_number;
 };
 
 /* first page (offset 0-4095) of a data file
  * contains metadata.
  */
 struct header_page_t {
-    uint64_t free_page_number;
-    uint64_t root_page_number;
+    pagenum_t free_page_number;
+    pagenum_t root_page_number;
     uint64_t number_of_pages;
     int8_t reserved[4072];
 };
@@ -65,14 +65,14 @@ struct header_page_t {
  * linked and allocation is managed by the free page list.
  */
 struct free_page_t {
-    uint64_t next_free_page_number;
+    pagenum_t next_free_page_number;
     int8_t not_used[4088];
 };
 
 /* Internal/Leaf page
  */
 struct node_page_t {
-    uint64_t parent_page_number;
+    pagenum_t parent_page_number;
     uint32_t is_leaf;
     uint32_t number_of_keys;
     int8_t reserved[104];
@@ -81,8 +81,8 @@ struct node_page_t {
      * one_more_page_number for internal node
      */
     union {
-        uint64_t right_sibling_page_number;
-        uint64_t one_more_page_number;
+        pagenum_t right_sibling_page_number;
+        pagenum_t one_more_page_number;
     };
 
     /* key_values for leaf node,
@@ -155,8 +155,8 @@ void enqueue(Queue* q, pagenum_t data);
 pagenum_t dequeue(Queue* q);
 void print_tree();
 
-extern int fd;
-extern page_t header_page;
+extern int fds[10];
+extern buffer_t* buf_pool;
 
 #endif
 
