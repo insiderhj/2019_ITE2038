@@ -3,9 +3,6 @@
 
 #include "bpt.h"
 
-// type redefinition
-typedef struct buffer_t buffer_t;
-
 struct buffer_t {
     page_t frame;
     int table_id;
@@ -15,5 +12,7 @@ struct buffer_t {
     buffer_t* next;
     buffer_t* prev;
 };
+
+int init_db(int num_buf);
 
 #endif

@@ -1,9 +1,12 @@
 #include "bpt.h"
 
+int fds[10];
+
 int main( int argc, char ** argv ) {
     char instruction;
     int64_t key;
     char value[VALUE_SIZE];
+    int file_num = 0;
     open_table("database_insiderhj");
 
     printf("> ");
@@ -11,19 +14,19 @@ int main( int argc, char ** argv ) {
         switch (instruction) {
             case 'd':
                 scanf("%ld", &key);
-                db_delete(key);
+                db_delete(fds[0], key);
                 break;
             case 'i':
                 scanf("%ld %s", &key, value);
-                db_insert(key, value);
+                db_insert(fds[0], key, value);
                 break;
 	        case 'f':
                 scanf("%ld", &key);
-                if (db_find(key, value) == NOT_FOUND) printf("key %ld not found\n", key);
+                if (db_find(fds[0], key, value) == NOT_FOUND) printf("key %ld not found\n", key);
                 else printf("%ld: %s\n", key, value);
                 break;
             case 'p':
-                print_tree();
+                print_tree(fds[0]);
                 break;
             case 'q':
                 while (getchar() != (int)'\n');

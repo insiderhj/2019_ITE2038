@@ -2,17 +2,6 @@
 
 int fds[10];
 
-int init_db(int num_buf) {
-    // pool already exists
-    if (buf_pool) return CONFLICT;
-
-    // size is equal to or less than zero
-    if (num_buf <= 0) return BAD_REQUEST;
-
-    buf_pool = (buffer_t*)calloc(num_buf, sizeof(buffer_t));
-    return 0;
-}
-
 /* Open existing data file using ‘pathname’ or create one if not existed.
  * If success, return the unique table id, which represents the own table in this database.
  * Otherwise, return negative value. (This table id will be used for future assignment.)
@@ -199,7 +188,7 @@ pagenum_t insert_into_node_after_splitting(int table_id, pagenum_t root_num,
                                            int left_index, int64_t key, pagenum_t right_num) {
     int i, j, split;
     int64_t k_prime;
-    page_t new_parent, child;
+    page_t new_parent;
     pagenum_t new_parent_num;
     int64_t temp_keys[249];
     pagenum_t temp_page_numbers[250];
@@ -465,7 +454,6 @@ pagenum_t coalesce_nodes(int table_id, pagenum_t root_num, pagenum_t node_num, p
     int i, j, neighbor_insertion_index, node_end;
     pagenum_t tmp_num;
     page_t* tmp;
-    page_t child;
 
     if (neighbor_index == -1) {
         tmp = node;
@@ -525,7 +513,7 @@ pagenum_t coalesce_nodes(int table_id, pagenum_t root_num, pagenum_t node_num, p
 void redistribute_nodes(int table_id, pagenum_t node_num, page_t* node, pagenum_t neighbor_num, page_t* neighbor,
                         int neighbor_index, int k_prime_index, int64_t k_prime) {
     int i;
-    page_t tmp, parent;
+    page_t parent;
     file_read_page(table_id, node->node.parent_page_number, &parent);
 
     // case: node is the leftmost child
@@ -535,7 +523,7 @@ void redistribute_nodes(int table_id, pagenum_t node_num, page_t* node, pagenum_
         node->node.key_page_numbers[node->node.number_of_keys].page_number =
             neighbor->node.one_more_page_number;
 
-        file_set_parent(table_id, node->node.key_page_numbers[node->node.number_of_keys], node_num);
+        file_set_parent(table_id, node->node.key_page_numbers[node->node.number_of_keys].page_number, node_num);
         parent.node.key_page_numbers[k_prime_index].key =
             neighbor->node.key_page_numbers[0].key;
         
