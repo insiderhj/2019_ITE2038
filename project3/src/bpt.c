@@ -166,7 +166,6 @@ int get_left_index(page_t* parent, pagenum_t left_num) {
  */
 void insert_into_node(int table_id, int parent_num, page_t* parent, int left_index, int64_t key, pagenum_t right_num) {
     int i;
-
     for (i = parent->node.number_of_keys; i > left_index; i--) {
         parent->node.key_page_numbers[i].page_number =
             parent->node.key_page_numbers[i - 1].page_number;
@@ -175,7 +174,7 @@ void insert_into_node(int table_id, int parent_num, page_t* parent, int left_ind
     parent->node.key_page_numbers[left_index].page_number = right_num;
     parent->node.key_page_numbers[left_index].key = key;
     parent->node.number_of_keys++;
-    file_write_page(table_id, parent_num, &parent);
+    file_write_page(table_id, parent_num, parent);
 }
 
 /* Inserts a new key and pointer to a node
@@ -340,7 +339,6 @@ pagenum_t insert_into_leaf_after_splitting(int table_id, pagenum_t root_num, pag
     file_write_page(table_id, leaf_num, leaf);
     file_write_page(table_id, new_leaf_num, &new_leaf);
 
-    printf("%d %d\n", leaf_num, new_leaf_num);
     return insert_into_parent(table_id, root_num, leaf_num, leaf, new_key, new_leaf_num, &new_leaf);
 }
 
