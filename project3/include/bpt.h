@@ -10,7 +10,7 @@
 #include <unistd.h>
 
 #include "types.h"
-#include "file_manager.h"
+#include "disk_manager.h"
 #include "buffer_manager.h"
 
 // open
@@ -59,4 +59,3 @@ pagenum_t dequeue(Queue* q);
 void print_tree(int table_id);
 
 #endif
-

@@ -25,18 +25,15 @@ int main( int argc, char ** argv ) {
                 if (db_find(fds[0], key, value) == NOT_FOUND) printf("key %ld not found\n", key);
                 else printf("%ld: %s\n", key, value);
                 break;
-            case 'p':
-                print_tree(fds[0]);
-                break;
             case 'q':
                 while (getchar() != (int)'\n');
                 return 0;
                 break;
         }
+        print_tree(fds[0]);
         while (getchar() != (int)'\n');
         printf("> ");
     }
     printf("\n");
     return 0;
 }
-
