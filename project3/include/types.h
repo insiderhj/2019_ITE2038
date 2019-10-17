@@ -1,3 +1,11 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <string.h>
+#include <stdint.h>
+#include <fcntl.h>
+#include <unistd.h>
+
 // page properties
 #define PAGE_SIZE 4096
 #define OFF(pagenum) ((pagenum) * PAGE_SIZE)
@@ -26,7 +34,9 @@ typedef struct header_page_t header_page_t;
 typedef struct free_page_t free_page_t;
 typedef struct node_page_t node_page_t;
 typedef struct page_t page_t;
+
 typedef struct Queue Queue;
+
 typedef struct buffer_t buffer_t;
 
 // extern variables

@@ -1,14 +1,6 @@
 #ifndef __BPT_H__
 #define __BPT_H__
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdbool.h>
-#include <string.h>
-#include <stdint.h>
-#include <fcntl.h>
-#include <unistd.h>
-
 #include "types.h"
 #include "disk_manager.h"
 #include "buffer_manager.h"
