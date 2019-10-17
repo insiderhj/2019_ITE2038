@@ -340,6 +340,7 @@ pagenum_t insert_into_leaf_after_splitting(int table_id, pagenum_t root_num, pag
     file_write_page(table_id, leaf_num, leaf);
     file_write_page(table_id, new_leaf_num, &new_leaf);
 
+    printf("%d %d\n", leaf_num, new_leaf_num);
     return insert_into_parent(table_id, root_num, leaf_num, leaf, new_key, new_leaf_num, &new_leaf);
 }
 
@@ -353,12 +354,13 @@ int db_insert(int table_id, int64_t key, char* value) {
     if (db_find(table_id, key, res) == 0) return CONFLICT;
 
     page_t header_page;
+    pagenum_t root_num;
     file_read_page(table_id, 0, &header_page);
     
     // case: file has no root page
     if (header_page.header.root_page_number == 0) {
-        header_page.header.root_page_number = start_new_tree(table_id, key, value);
-        file_write_page(table_id, 0, &header_page);
+        root_num = start_new_tree(table_id, key, value);
+        file_set_root(table_id, root_num);
         return 0;
     }
 
@@ -370,7 +372,7 @@ int db_insert(int table_id, int64_t key, char* value) {
         return 0;
     }
 
-    pagenum_t root_num = insert_into_leaf_after_splitting(
+    root_num = insert_into_leaf_after_splitting(
         table_id, header_page.header.root_page_number, leaf_num, &leaf, key, value);
     file_set_root(table_id, root_num);
     
@@ -691,6 +693,7 @@ void print_tree(int table_id) {
 
     while (q.item_count != 0) {
         tmp_num = dequeue(&q);
+        printf("(%ld) ", tmp_num);
         file_read_page(table_id, tmp_num, &tmp);
         
         // case: leaf node
