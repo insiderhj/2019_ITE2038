@@ -9,6 +9,9 @@
 #include <fcntl.h>
 #include <unistd.h>
 
+#include "file_manager.h"
+#include "buffer_manager.h"
+
 // page properties
 #define PAGE_SIZE 4096
 #define OFF(pagenum) ((pagenum) * PAGE_SIZE)

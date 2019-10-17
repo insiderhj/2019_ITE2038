@@ -1,5 +1,4 @@
 #include "bpt.h"
-#include "file_manager.h"
 
 int fd;
 page_t header_page;
