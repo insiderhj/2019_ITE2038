@@ -100,3 +100,13 @@ struct Queue {
     int item_count;
     pagenum_t pages[QUEUE_SIZE];
 };
+
+struct buffer_t {
+    page_t frame;
+    int table_id;
+    pagenum_t page_num;
+    uint32_t is_dirty;
+    uint32_t is_pinned;
+    buffer_t* next;
+    buffer_t* prev;
+};

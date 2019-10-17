@@ -14,7 +14,7 @@ int open_table(char* pathname) {
     if (fds[9]) return CONFLICT;
 
     int i = -1;
-    while (fds[1 + i++]);
+    while (fds[++i]);
     fds[i] = file_open(pathname);
 
     // open db failed

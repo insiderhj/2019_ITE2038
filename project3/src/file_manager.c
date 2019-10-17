@@ -1,11 +1,11 @@
 #include "bpt.h"
 
 int file_open(char* pathname) {
-    open(pathname, O_CREAT | O_NOFOLLOW | O_RDWR | O_SYNC, 0666);
+    return open(pathname, O_CREAT | O_NOFOLLOW | O_RDWR | O_SYNC, 0666);
 }
 
 int file_read_init(int fd, page_t* header_page) {
-    return read(fd, &header_page, PAGE_SIZE);
+    return read(fd, header_page, PAGE_SIZE);
 }
 
 /* Allocate an on-disk page from the free page list
