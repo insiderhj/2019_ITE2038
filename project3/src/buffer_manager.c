@@ -146,7 +146,7 @@ void flush_buf(buffer_t* buf) {
 int close_table(int table_id) {
     buffer_t* buf = buf_pool.buffers + buf_pool.lru;
     while (buf->next != -1) {
-
+        
     }
 }
 
