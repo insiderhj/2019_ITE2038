@@ -101,6 +101,7 @@ buffer_t* buf_alloc_page(table_id) {
 
     // get one free page from list
     buffer_t* buf = get_buf(table_id, header_page->frame.header.free_page_number);
+    buf->is_dirty = 1;
     pagenum_t free_page_num = header_page->frame.header.free_page_number;
     file_read_page(table_id, free_page_num, buf);
 
@@ -141,6 +142,12 @@ void flush_buf(buffer_t* buf) {
     } else {
         buf_pool.buffers[buf->prev].next = buf->next;
     }
+}
+
+void set_root(int table_id, int root_num) {
+    buffer_t* header_page = get_buf(table_id, 0);
+    header_page->is_dirty = 1;
+    header_page->frame.header.root_page_number = root_num;
 }
 
 int close_table(int table_id) {

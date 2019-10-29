@@ -16,6 +16,8 @@ buffer_t* buf_free_page(int table_id, pagenum_t pagenum);
 
 void flush_buf(buffer_t* buf);
 
+void set_root(int table_id, int root_num);
+
 int close_table(int table_id);
 int shutdown_db();
 
