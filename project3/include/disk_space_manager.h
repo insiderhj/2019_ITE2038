@@ -7,8 +7,6 @@
 int file_open(char* pathname);
 int file_read_init(int fd, buffer_t* header_page);
 
-pagenum_t file_alloc_page(int table_id);
-void file_free_page(int table_id, pagenum_t pagenum);
 void file_read_page(int table_id, pagenum_t pagenum, buffer_t* dest);
 void file_write_page(int table_id, pagenum_t pagenum, const buffer_t* src);
 
