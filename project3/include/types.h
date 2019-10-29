@@ -38,10 +38,12 @@ typedef struct page_t page_t;
 typedef struct Queue Queue;
 
 typedef struct buffer_t buffer_t;
+typedef struct buffer_pool_t buffer_pool_t;
 
 // extern variables
 extern int fds[10];
 extern buffer_t* buf_pool;
+extern int init;
 
 /* key, value type for leaf node
  */
@@ -122,6 +124,15 @@ struct buffer_t {
     pagenum_t page_num;
     uint32_t is_dirty;
     uint32_t is_pinned;
-    buffer_t* next;
-    buffer_t* prev;
+    int next;
+    int prev;
+};
+
+struct buffer_pool_t {
+    int init;
+    buffer_t* buffers;
+    int capacity;
+    int num_buffers;
+    int mru;
+    int lru;
 };
