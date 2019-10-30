@@ -47,7 +47,7 @@ typedef struct buffer_pool_t buffer_pool_t;
 extern int fds[10];
 extern buffer_pool_t buf_pool;
 extern int init;
-extern char* pathnames[10];
+extern char pathnames[10][512];
 
 /* key, value type for leaf node
  */

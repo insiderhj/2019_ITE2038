@@ -1,6 +1,6 @@
 #include "bpt.h"
 
-char* pathnames[10];
+char pathnames[10][512];
 int fds[10];
 
 int check_pathname(char* pathname) {

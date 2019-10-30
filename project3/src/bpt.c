@@ -1,6 +1,6 @@
 #include "bpt.h"
 
-char* pathnames[10];
+char pathnames[10][512];
 int fds[10];
 int init;
 
@@ -28,7 +28,7 @@ int open_table(char* pathname) {
     if (check_pathname(pathname) == CONFLICT) return CONFLICT;
 
     fds[i] = buf_read_table(pathname);
-    pathnames[i] = pathname;
+    strcpy(pathnames[i], pathname);
 
     // open db failed
     if (fds[i] == -1) {

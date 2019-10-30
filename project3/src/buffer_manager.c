@@ -1,7 +1,7 @@
 #include "bpt.h"
 
 buffer_pool_t buf_pool;
-char* pathnames[10];
+char pathnames[10][512];
 int fds[10];
 int init;
 
@@ -20,7 +20,6 @@ int init_db(int num_buf) {
 
     int i;
     for (i = 0; i < 10; i++) {
-        pathnames[i] = (char*)malloc(sizeof(char) * 512);
         fds[i] = 0;
     }
 
@@ -249,11 +248,6 @@ int shutdown_db() {
     }
     flush_buf(buf_num);
 
-    int i;
-    for (i = 0; i < 10; i++) {
-        printf("free %d: %s\n", i, pathnames[i]);
-        free(pathnames[i]);
-    }
     free(buf_pool.buffers);
 
     init = 0;
