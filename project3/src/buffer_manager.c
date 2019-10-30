@@ -28,13 +28,13 @@ int buf_read_table(char* pathname) {
     if (table_id == -1) return table_id;
 
     int header_page_num = add_buf();
-    set_mru(header_page_num);
     buffer_t* header_page = buf_pool.buffers + header_page_num;
+    set_mru(header_page_num);
     if (!file_read_init(table_id, header_page)) {
-        header_page->is_dirty = 1;
         memset(header_page, 0, PAGE_SIZE);
         header_page->frame.header.number_of_pages = 1;
     }
+    header_page->is_dirty = 1;
     return table_id;
 }
 
@@ -64,6 +64,8 @@ void set_mru(int buf_num) {
 }
 
 int find_buf(int table_id, pagenum_t pagenum) {
+    if (buf_pool.num_buffers == 0) return NOT_FOUND;
+
     int i, buf_num = buf_pool.mru;
     buffer_t* buf = buf_pool.buffers + buf_pool.mru;
     while (buf->prev != -1) {
@@ -84,12 +86,12 @@ buffer_t* get_buf(int table_id, pagenum_t pagenum, uint32_t is_dirty) {
     // cannot find buf in pool
     if (buf_num == NOT_FOUND) {
         buf_num = add_buf();
+        file_read_page(table_id, pagenum, buf);
     }
 
     buf = buf_pool.buffers + buf_num;
-    file_read_page(table_id, pagenum, buf);
     
-    if (!buf->is_dirty) buf->is_dirty = is_dirty;
+    buf->is_dirty |= is_dirty;
 
     set_mru(buf_num);
     return buf;
@@ -123,7 +125,6 @@ int add_buf() {
 
 buffer_t* buf_alloc_page(table_id) {
     buffer_t* header_page = get_buf(table_id, 0, 1);
-    header_page->is_dirty = 1;
 
     // case: no free page
     if (header_page->frame.header.free_page_number == 0) {
@@ -142,7 +143,6 @@ buffer_t* buf_alloc_page(table_id) {
 
     // get one free page from list
     buffer_t* buf = get_buf(table_id, header_page->frame.header.free_page_number, 1);
-    buf->is_dirty = 1;
     pagenum_t free_page_num = header_page->frame.header.free_page_number;
     file_read_page(table_id, free_page_num, buf);
 
@@ -156,8 +156,6 @@ void buf_free_page(int table_id, pagenum_t pagenum) {
     header_page = get_buf(table_id, 0, 1);
     p = get_buf(table_id, pagenum, 1);
 
-    header_page->is_dirty = 1;
-    p->is_dirty = 1;
     memset(p, 0, PAGE_SIZE);
     
     pagenum_t first_free_page = header_page->frame.header.free_page_number;
@@ -187,7 +185,6 @@ void flush_buf(buffer_t* buf) {
 
 void set_root(int table_id, int root_num) {
     buffer_t* header_page = get_buf(table_id, 0, 1);
-    header_page->is_dirty = 1;
     header_page->frame.header.root_page_number = root_num;
 }
 

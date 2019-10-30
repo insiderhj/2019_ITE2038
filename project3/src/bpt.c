@@ -17,9 +17,6 @@ int open_table(char* pathname) {
     int i = -1;
     while (fds[++i]);
     fds[i] = buf_read_table(pathname);
-    buffer_t* tmp = buf_pool.buffers;//get_buf(fds[i], 0, 0);
-    printf("create table! next: %d prev: %d, is_dirty: %d\n", tmp->next, tmp->prev, tmp->is_dirty);
-    printf("buf_pool: num_bufs: %d, mru: %d, lru: %d\n", buf_pool.num_buffers, buf_pool.mru, buf_pool.lru);
 
     // open db failed
     if (fds[i] == -1) {
@@ -171,9 +168,10 @@ void insert_into_node(int table_id, buffer_t* parent, int left_index, int64_t ke
 pagenum_t insert_into_node_after_splitting(int table_id, pagenum_t root_num,
                                            buffer_t* parent,
                                            int left_index, int64_t key, pagenum_t right_num) {
+    printf("insert_into_node_after_splitting\n");
     int i, j, split;
     int64_t k_prime;
-    buffer_t* new_parent = make_node(table_id);
+    buffer_t* new_parent = make_node(table_id), * child;
     int64_t temp_keys[249];
     pagenum_t temp_page_numbers[250];
 
@@ -214,11 +212,13 @@ pagenum_t insert_into_node_after_splitting(int table_id, pagenum_t root_num,
     new_parent->frame.node.parent_page_number = parent->frame.node.parent_page_number;
 
     // set parent node number of first child
-    file_set_parent(table_id, new_parent->frame.node.one_more_page_number, new_parent->page_num);
+    child = get_buf(table_id, new_parent->frame.node.one_more_page_number, 1);
+    child->frame.node.parent_page_number = new_parent->page_num;
 
     // set parent node number of other children
     for (i = 0; i < new_parent->frame.node.number_of_keys; i++) {
-        file_set_parent(table_id, new_parent->frame.node.key_page_numbers[i].page_number, new_parent->page_num);
+        child = get_buf(table_id, new_parent->frame.node.key_page_numbers[i].page_number, 1);
+        child->frame.node.parent_page_number = new_parent->page_num;
     }
 
     return insert_into_parent(table_id, root_num, parent, k_prime, new_parent);
@@ -387,12 +387,13 @@ pagenum_t adjust_root(int table_id, pagenum_t root_num) {
     if (root->frame.node.number_of_keys > 0) return root_num;
     
     // case: empty root
-    if (!root->frame.node.is_leaf) {
-        new_root_num = root->frame.node.one_more_page_number;
-        file_set_parent(table_id, new_root_num, 0);
+    if (root->frame.node.is_leaf) {
+        new_root_num = 0;
     }
     else {
-        new_root_num = 0;
+        new_root_num = root->frame.node.one_more_page_number;
+        new_root = get_buf(table_id, new_root_num, 1);
+        new_root->frame.node.parent_page_number = 0;
     }
     buf_free_page(table_id, root_num);
 
@@ -454,7 +455,8 @@ pagenum_t coalesce_nodes(int table_id, pagenum_t root_num, buffer_t* node,
         neighbor->frame.node.number_of_keys += node_end;
 
         for (i = neighbor_insertion_index; i < neighbor->frame.node.number_of_keys; i++) {
-            file_set_parent(table_id, neighbor->frame.node.key_page_numbers[i].page_number, neighbor->page_num);
+            tmp = get_buf(table_id, neighbor->frame.node.key_page_numbers[i].page_number, 1);
+            tmp->frame.node.parent_page_number = neighbor->page_num;
         }
     }
 
@@ -482,7 +484,7 @@ pagenum_t coalesce_nodes(int table_id, pagenum_t root_num, buffer_t* node,
 void redistribute_nodes(int table_id, buffer_t* node, buffer_t* neighbor,
                         int neighbor_index, int k_prime_index, int64_t k_prime) {
     int i;
-    buffer_t* parent;
+    buffer_t* parent, * tmp;
     parent = get_buf(table_id, node->frame.node.parent_page_number, 1);
 
     // case: node is the leftmost child
@@ -491,7 +493,9 @@ void redistribute_nodes(int table_id, buffer_t* node, buffer_t* neighbor,
         node->frame.node.key_page_numbers[node->frame.node.number_of_keys].page_number =
             neighbor->frame.node.one_more_page_number;
 
-        file_set_parent(table_id, node->frame.node.key_page_numbers[node->frame.node.number_of_keys].page_number, node->page_num);
+        tmp = get_buf(table_id, node->frame.node.key_page_numbers[node->frame.node.number_of_keys].page_number, 1);
+        tmp->frame.node.parent_page_number = node->page_num;
+
         parent->frame.node.key_page_numbers[k_prime_index].key =
             neighbor->frame.node.key_page_numbers[0].key;
         
@@ -516,7 +520,8 @@ void redistribute_nodes(int table_id, buffer_t* node, buffer_t* neighbor,
         node->frame.node.one_more_page_number =
             neighbor->frame.node.key_page_numbers[neighbor->frame.node.number_of_keys - 1].page_number;
         
-        file_set_parent(table_id, node->frame.node.one_more_page_number, node->page_num);
+        tmp = get_buf(table_id, node->frame.node.one_more_page_number, 1);
+        tmp->frame.node.parent_page_number = node->page_num;
         
         node->frame.node.key_page_numbers[0].key = k_prime;
         parent->frame.node.key_page_numbers[k_prime_index].key =
