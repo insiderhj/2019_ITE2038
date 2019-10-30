@@ -241,10 +241,11 @@ int shutdown_db() {
     flush_buf(buf_num);
 
     int i;
-    // for (i = 0; i < 10; i++) {
-    //     free(pathnames[i]);
-    // }
-    // free(buf_pool.buffers);
+    for (i = 0; i < 10; i++) {
+        printf("free %d: %s\n", i, pathnames[i]);
+        free(pathnames[i]);
+    }
+    free(buf_pool.buffers);
 
     init = 0;
     return 0;

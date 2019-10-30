@@ -12,8 +12,13 @@ int open_table(char* pathname) {
     // pathname is null
     if (pathname == NULL) return BAD_REQUEST;
 
+    int i;
+    for (i = 0; i < 10; i++) {
+        if (fds[i] == 0) break;
+    }
+
     // file array is full
-    if (fds[9]) return CONFLICT;
+    if (i == 10) return BAD_REQUEST;
 
     // didn't initialize db
     if (!init) return BAD_REQUEST;
@@ -21,8 +26,6 @@ int open_table(char* pathname) {
     // file already opened
     if (check_pathname(pathname) == CONFLICT) return CONFLICT;
 
-    int i = -1;
-    while (fds[++i]);
     fds[i] = buf_read_table(pathname);
     pathnames[i] = pathname;
 
