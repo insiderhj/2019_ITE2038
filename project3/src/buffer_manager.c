@@ -116,15 +116,23 @@ int find_free_buf() {
     return NOT_FOUND;
 }
 
+int find_deletion_target() {
+    int buf_num = buf_pool.lru;
+    while (buf_pool.buffers[buf_num].is_pinned) {
+        buf_num = buf_pool.buffers[buf_num].next;
+    }
+    return buf_num;
+}
+
 int add_buf() {
     buffer_t* buf;
     int buf_num;
 
     // case: buffer pool is full
     if (buf_pool.num_buffers == buf_pool.capacity) {
-        flush_buf(buf_pool.lru);
-        buf_num = buf_pool.lru;
-        buf = buf_pool.buffers + buf_pool.lru;
+        buf_num = find_deletion_target();
+        flush_buf(buf_num);
+        buf = buf_pool.buffers + buf_num;
     }
     
     // case: buffer pool is not full
@@ -181,6 +189,7 @@ void buf_free_page(buffer_t* header_page, buffer_t* p) {
 
 void flush_buf(int buf_num) {
     buffer_t* buf = buf_pool.buffers + buf_num;
+    buf->is_pinned = 1;
     if (buf->is_dirty) {
         file_write_page(buf->table_id, buf->page_num, buf);
     }

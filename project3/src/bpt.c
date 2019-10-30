@@ -12,6 +12,7 @@ int open_table(char* pathname) {
     // pathname is null
     if (pathname == NULL) return BAD_REQUEST;
 
+    // find index to place fd
     int i;
     for (i = 0; i < 10; i++) {
         if (fds[i] == 0) break;
