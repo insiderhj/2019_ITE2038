@@ -124,6 +124,7 @@ struct buffer_t {
     pagenum_t page_num;
     uint32_t is_dirty;
     uint32_t is_pinned;
+    uint32_t is_allocated;
     int next;
     int prev;
 };

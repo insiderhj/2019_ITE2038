@@ -95,6 +95,14 @@ buffer_t* get_buf(int table_id, pagenum_t pagenum, uint32_t is_dirty) {
     return buf;
 }
 
+int find_free_buf() {
+    int i;
+    for (i = 0; i < buf_pool.capacity; i++) {
+        if (!buf_pool.buffers[i].is_allocated) return i;
+    }
+    return NOT_FOUND;
+}
+
 int add_buf() {
     buffer_t* buf;
     int buf_num;
@@ -108,12 +116,13 @@ int add_buf() {
     
     // case: buffer pool is not full
     else {
-        buf_num = buf_pool.num_buffers;
+        buf_num = find_free_buf();
         buf = buf_pool.buffers + buf_pool.num_buffers;
     }
     buf = buf_pool.buffers + buf_num;
     buf->is_dirty = 0;
     buf->is_pinned = 0;
+    buf->is_allocated = 1;
     buf->next = -1;
     buf->prev = -1;
 
@@ -186,6 +195,7 @@ void flush_buf(int buf_num) {
         buf_pool.buffers[buf->prev].next = buf->next;
     }
 
+    buf->is_allocated = 0;
     buf_pool.num_buffers--;
 }
 

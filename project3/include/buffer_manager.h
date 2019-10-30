@@ -11,6 +11,7 @@ void set_mru(int buf_num);
 int find_buf(int table_id, pagenum_t pagenum);
 
 buffer_t* get_buf(int table_id, pagenum_t pagenum, uint32_t is_dirty);
+int find_free_buf();
 int add_buf();
 
 buffer_t* buf_alloc_page(int table_id);
