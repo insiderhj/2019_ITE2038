@@ -7,6 +7,7 @@ int main( int argc, char ** argv ) {
     int64_t key;
     char value[VALUE_SIZE];
     int file_num = 0;
+    init_db(500);
     open_table("database_insiderhj");
 
     printf("> ");
@@ -27,8 +28,8 @@ int main( int argc, char ** argv ) {
                 break;
             case 'q':
                 while (getchar() != (int)'\n');
+                shutdown_db();
                 return 0;
-                break;
         }
         print_tree(fds[0]);
         while (getchar() != (int)'\n');

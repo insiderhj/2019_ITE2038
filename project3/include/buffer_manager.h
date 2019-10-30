@@ -4,7 +4,7 @@
 #include "bpt.h"
 
 int init_db(int num_buf);
-int buf_read_table(int table_id);
+int buf_read_table(char* pathname);
 
 void set_mru(int buf_num);
 

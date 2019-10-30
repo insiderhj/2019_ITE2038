@@ -23,10 +23,14 @@ int init_db(int num_buf) {
     return 0;
 }
 
-int buf_read_table(int table_id) {
+int buf_read_table(char* pathname) {
+    int table_id = file_open(pathname);
+    if (table_id == -1) return table_id;
+
     int header_page_num = add_buf();
+    set_mru(header_page_num);
     buffer_t* header_page = buf_pool.buffers + header_page_num;
-    if (file_read_init(table_id, header_page)) {
+    if (!file_read_init(table_id, header_page)) {
         header_page->is_dirty = 1;
         memset(header_page, 0, PAGE_SIZE);
         header_page->frame.header.number_of_pages = 1;
@@ -34,21 +38,28 @@ int buf_read_table(int table_id) {
     return table_id;
 }
 
+// TODO
 void set_mru(int buf_num) {
-    if (buf_pool.lru == buf_num) {
-        buf_pool.lru = buf_pool.buffers[buf_num].next;
-    }
+    if (buf_pool.mru == buf_num) return;
 
     if (buf_pool.lru == -1) {
         buf_pool.lru = buf_num;
     }
+    else if (buf_pool.lru == buf_num) {
+        buf_pool.lru = buf_pool.buffers[buf_num].next;
+    }
+
+    if (buf_pool.buffers[buf_num].next != -1) {
+        buf_pool.buffers[buf_pool.buffers[buf_num].next].prev = buf_pool.buffers[buf_num].prev;
+    }
+    
+    if (buf_pool.buffers[buf_num].prev != -1) {
+        buf_pool.buffers[buf_pool.buffers[buf_num].prev].next = buf_pool.buffers[buf_num].next;
+    }
 
     buf_pool.buffers[buf_num].next = -1;
+    if (buf_pool.mru != -1) buf_pool.buffers[buf_pool.mru].next = buf_num;
     buf_pool.buffers[buf_num].prev = buf_pool.mru;
-    
-    if (buf_pool.mru != -1) {
-        buf_pool.buffers[buf_pool.mru].next = buf_num;
-    }
     buf_pool.mru = buf_num;
 }
 
@@ -77,7 +88,9 @@ buffer_t* get_buf(int table_id, pagenum_t pagenum, uint32_t is_dirty) {
 
     buf = buf_pool.buffers + buf_num;
     file_read_page(table_id, pagenum, buf);
-    buf->is_dirty = is_dirty;
+    
+    if (!buf->is_dirty) buf->is_dirty = is_dirty;
+
     set_mru(buf_num);
     return buf;
 }
@@ -85,17 +98,25 @@ buffer_t* get_buf(int table_id, pagenum_t pagenum, uint32_t is_dirty) {
 int add_buf() {
     buffer_t* buf;
     int buf_num;
+
+    // case: buffer pool is full
     if (buf_pool.num_buffers == buf_pool.capacity) {
         flush_buf(buf_pool.buffers + buf_pool.lru);
         buf_num = buf_pool.lru;
         buf = buf_pool.buffers + buf_pool.lru;
-    } else {
+    }
+    
+    // case: buffer pool is not full
+    else {
         buf_num = buf_pool.num_buffers;
         buf = buf_pool.buffers + buf_pool.num_buffers;
+        buf_pool.num_buffers++;
     }
     buf = buf_pool.buffers + buf_num;
     buf->is_dirty = 0;
     buf->is_pinned = 0;
+    buf->next = -1;
+    buf->prev = -1;
 
     return buf_num;
 }
@@ -189,5 +210,7 @@ int shutdown_db() {
         buf = next;
     }
     flush_buf(buf);
+    free(buf_pool.buffers);
+    init = 0;
     return 0;
 }

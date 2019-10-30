@@ -16,16 +16,16 @@ int open_table(char* pathname) {
 
     int i = -1;
     while (fds[++i]);
-    fds[i] = file_open(pathname);
+    fds[i] = buf_read_table(pathname);
+    buffer_t* tmp = buf_pool.buffers;//get_buf(fds[i], 0, 0);
+    printf("create table! next: %d prev: %d, is_dirty: %d\n", tmp->next, tmp->prev, tmp->is_dirty);
+    printf("buf_pool: num_bufs: %d, mru: %d, lru: %d\n", buf_pool.num_buffers, buf_pool.mru, buf_pool.lru);
 
     // open db failed
     if (fds[i] == -1) {
         fds[i] = 0;
         return INTERNAL_ERR;
     }
-
-    page_t header_page;
-    buf_read_table(fds[i]);
     return fds[i];
 }
 
