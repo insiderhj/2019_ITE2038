@@ -3,8 +3,6 @@
 buffer_pool_t buf_pool;
 int init;
 
-//TODO: dirty bit sets
-
 int init_db(int num_buf) {
     // pool already exists
     if (init) return CONFLICT;
@@ -86,11 +84,11 @@ buffer_t* get_buf(int table_id, pagenum_t pagenum, uint32_t is_dirty) {
     // cannot find buf in pool
     if (buf_num == NOT_FOUND) {
         buf_num = add_buf();
+        buf = buf_pool.buffers + buf_num;
         file_read_page(table_id, pagenum, buf);
+    } else {
+        buf = buf_pool.buffers + buf_num;
     }
-
-    buf = buf_pool.buffers + buf_num;
-    
     buf->is_dirty |= is_dirty;
 
     set_mru(buf_num);
@@ -103,7 +101,7 @@ int add_buf() {
 
     // case: buffer pool is full
     if (buf_pool.num_buffers == buf_pool.capacity) {
-        flush_buf(buf_pool.buffers + buf_pool.lru);
+        flush_buf(buf_pool.lru);
         buf_num = buf_pool.lru;
         buf = buf_pool.buffers + buf_pool.lru;
     }
@@ -112,13 +110,14 @@ int add_buf() {
     else {
         buf_num = buf_pool.num_buffers;
         buf = buf_pool.buffers + buf_pool.num_buffers;
-        buf_pool.num_buffers++;
     }
     buf = buf_pool.buffers + buf_num;
     buf->is_dirty = 0;
     buf->is_pinned = 0;
     buf->next = -1;
     buf->prev = -1;
+
+    buf_pool.num_buffers++;
 
     return buf_num;
 }
@@ -144,7 +143,7 @@ buffer_t* buf_alloc_page(table_id) {
     // get one free page from list
     buffer_t* buf = get_buf(table_id, header_page->frame.header.free_page_number, 1);
     pagenum_t free_page_num = header_page->frame.header.free_page_number;
-    file_read_page(table_id, free_page_num, buf);
+    // file_read_page(table_id, free_page_num, buf);
 
     // modify free page list
     header_page->frame.header.free_page_number = buf->frame.free.next_free_page_number;
@@ -163,24 +162,31 @@ void buf_free_page(int table_id, pagenum_t pagenum) {
     header_page->frame.header.free_page_number = pagenum;
 }
 
-void flush_buf(buffer_t* buf) {
+void flush_buf(int buf_num) {
+    buffer_t* buf = buf_pool.buffers + buf_num;
     if (buf->is_dirty) {
         file_write_page(buf->table_id, buf->page_num, buf);
     }
 
     // check if buf is mru
-    if (buf->next == -1) {
+    if (buf_pool.mru == buf_num) {
         buf_pool.mru = buf->prev;
-    } else {
-        buf_pool.buffers[buf->next].prev = buf->prev;
     }
 
     // check if buf is lru
-    if (buf->prev == -1) {
+    if (buf_pool.lru == buf_num) {
         buf_pool.lru = buf->next;
-    } else {
+    }
+
+    if (buf->next != -1) {
+        buf_pool.buffers[buf->next].prev = buf->prev;
+    }
+
+    if (buf->prev != -1) {
         buf_pool.buffers[buf->prev].next = buf->next;
     }
+
+    buf_pool.num_buffers--;
 }
 
 void set_root(int table_id, int root_num) {
@@ -189,25 +195,41 @@ void set_root(int table_id, int root_num) {
 }
 
 int close_table(int table_id) {
-    buffer_t* buf = buf_pool.buffers + buf_pool.lru, * next;
+    int buf_num = buf_pool.lru, next_num;
+    buffer_t* buf = buf_pool.buffers + buf_num;
     while (buf->next != -1) {
-        next = buf_pool.buffers + buf->next;
-        if (buf->table_id == table_id) flush_buf(buf);
-        buf = next;
+        next_num = buf->next;
+        if (buf->table_id == table_id) flush_buf(buf_num);
+        buf_num = next_num;
+        buf = buf_pool.buffers + buf_num;
     }
-    if (buf->table_id == table_id) flush_buf(buf);
+    if (buf->table_id == table_id) flush_buf(buf_num);
     return 0;
 }
 
 int shutdown_db() {
-    buffer_t* buf = buf_pool.buffers + buf_pool.lru, * next;
+    int buf_num = buf_pool.lru, next_num;
+    buffer_t* buf = buf_pool.buffers + buf_num;
     while (buf->next != -1) {
-        next = buf_pool.buffers + buf->next;
-        flush_buf(buf);
-        buf = next;
+        next_num = buf->next;
+        flush_buf(buf_num);
+        buf_num = next_num;
+        buf = buf_pool.buffers + buf_num;
     }
-    flush_buf(buf);
+    flush_buf(buf_num);
     free(buf_pool.buffers);
     init = 0;
     return 0;
+}
+
+void print_buf() {
+    printf("buf info - mru: %d, lru: %d\n", buf_pool.mru, buf_pool.lru);
+    int buf_num = buf_pool.mru;
+    buffer_t* buf = buf_pool.buffers + buf_num;
+    while (buf->prev != -1) {
+        printf("buf_num: %d, table_id: %d, pagenum: %d\n", buf_num, buf->table_id, buf->page_num);
+        buf_num = buf->prev;
+        buf = buf_pool.buffers + buf_num;
+    }
+    printf("buf_num: %d, table_id: %d, pagenum: %d\n", buf_num, buf->table_id, buf->page_num);
 }

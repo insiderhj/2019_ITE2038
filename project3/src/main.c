@@ -31,7 +31,6 @@ int main( int argc, char ** argv ) {
                 shutdown_db();
                 return 0;
         }
-        print_tree(fds[0]);
         while (getchar() != (int)'\n');
         printf("> ");
     }

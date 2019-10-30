@@ -39,11 +39,12 @@ int cut(int len) {
 pagenum_t find_leaf(int table_id, pagenum_t root_num, int64_t key) {
     int i;
     pagenum_t c_num = root_num;
-    buffer_t* c;
-    c = get_buf(table_id, c_num, 0);
 
     // tree doesn't have root
     if (c_num == 0) return c_num;
+
+    buffer_t* c;
+    c = get_buf(table_id, c_num, 0);
 
     while (!c->frame.node.is_leaf) {
         i = 0;
@@ -75,7 +76,7 @@ int db_find(int table_id, int64_t key, char* ret_val) {
     if (leaf_num == 0) return NOT_FOUND;
 
     leaf = get_buf(table_id, leaf_num, 0);
-    
+
     // search key in the leaf
     for (i = 0; i < leaf->frame.node.number_of_keys; i++) {
         if (leaf->frame.node.key_values[i].key == key) break;

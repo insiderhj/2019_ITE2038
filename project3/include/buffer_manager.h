@@ -16,11 +16,13 @@ int add_buf();
 buffer_t* buf_alloc_page(int table_id);
 void buf_free_page(int table_id, pagenum_t pagenum);
 
-void flush_buf(buffer_t* buf);
+void flush_buf(int buf_num);
 
 void set_root(int table_id, int root_num);
 
 int close_table(int table_id);
 int shutdown_db();
+
+void print_buf();
 
 #endif
