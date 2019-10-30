@@ -42,7 +42,7 @@ typedef struct buffer_pool_t buffer_pool_t;
 
 // extern variables
 extern int fds[10];
-extern buffer_t* buf_pool;
+extern buffer_pool_t buf_pool;
 extern int init;
 
 /* key, value type for leaf node
@@ -129,7 +129,6 @@ struct buffer_t {
 };
 
 struct buffer_pool_t {
-    int init;
     buffer_t* buffers;
     int capacity;
     int num_buffers;

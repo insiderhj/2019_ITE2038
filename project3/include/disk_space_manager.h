@@ -5,7 +5,7 @@
 
 // file manager
 int file_open(char* pathname);
-int file_read_init(int fd, buffer_t* header_page);
+int file_read_init(int table_id, buffer_t* header_page);
 
 void file_read_page(int table_id, pagenum_t pagenum, buffer_t* dest);
 void file_write_page(int table_id, pagenum_t pagenum, const buffer_t* src);

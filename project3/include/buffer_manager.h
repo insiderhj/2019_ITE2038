@@ -4,15 +4,17 @@
 #include "bpt.h"
 
 int init_db(int num_buf);
+int buf_read_table(int table_id);
+
 void set_mru(int buf_num);
 
-buffer_t* find_buf(int table_id, pagenum_t pagenum);
+int find_buf(int table_id, pagenum_t pagenum);
 
-buffer_t* get_buf(int table_id, pagenum_t pagenum);
-buffer_t* add_buf();
+buffer_t* get_buf(int table_id, pagenum_t pagenum, uint32_t is_dirty);
+int add_buf();
 
 buffer_t* buf_alloc_page(int table_id);
-buffer_t* buf_free_page(int table_id, pagenum_t pagenum);
+void buf_free_page(int table_id, pagenum_t pagenum);
 
 void flush_buf(buffer_t* buf);
 

@@ -3,9 +3,11 @@
 buffer_pool_t buf_pool;
 int init;
 
+//TODO: dirty bit sets
+
 int init_db(int num_buf) {
     // pool already exists
-    if (buf_pool.init) return CONFLICT;
+    if (init) return CONFLICT;
 
     // size is equal to or less than zero
     if (num_buf <= 0) return BAD_REQUEST;
@@ -19,6 +21,17 @@ int init_db(int num_buf) {
     init = 1;
 
     return 0;
+}
+
+int buf_read_table(int table_id) {
+    int header_page_num = add_buf();
+    buffer_t* header_page = buf_pool.buffers + header_page_num;
+    if (file_read_init(table_id, header_page)) {
+        header_page->is_dirty = 1;
+        memset(header_page, 0, PAGE_SIZE);
+        header_page->frame.header.number_of_pages = 1;
+    }
+    return table_id;
 }
 
 void set_mru(int buf_num) {
@@ -39,57 +52,64 @@ void set_mru(int buf_num) {
     buf_pool.mru = buf_num;
 }
 
-buffer_t* find_buf(int table_id, pagenum_t pagenum) {
-    int i;
+int find_buf(int table_id, pagenum_t pagenum) {
+    int i, buf_num = buf_pool.mru;
     buffer_t* buf = buf_pool.buffers + buf_pool.mru;
     while (buf->prev != -1) {
-        if (buf->table_id == table_id && buf->page_num == pagenum) return buf;
-        buf = buf_pool.buffers + buf->prev;
+        if (buf->table_id == table_id && buf->page_num == pagenum) return buf_num;
+        buf_num = buf->prev;
+        buf = buf_pool.buffers + buf_num;
     }
-    if (buf->table_id == table_id && buf->page_num == pagenum) return buf;
-    return NULL;
+    if (buf->table_id == table_id && buf->page_num == pagenum) return buf_num;
+    return NOT_FOUND;
 }
 
-buffer_t* get_buf(int table_id, pagenum_t pagenum) {
-    if (!buf_pool.init) return NULL;
+buffer_t* get_buf(int table_id, pagenum_t pagenum, uint32_t is_dirty) {
+    if (!init) return NULL;
 
-    int i;
-    buffer_t* buf = find_buf(table_id, pagenum);
-    buffer_t* tmp;
+    int i, buf_num = find_buf(table_id, pagenum);
+    buffer_t* buf;
 
     // cannot find buf in pool
-    if (!buf) {
-        buf = add_buf();
+    if (buf_num == NOT_FOUND) {
+        buf_num = add_buf();
     }
 
+    buf = buf_pool.buffers + buf_num;
     file_read_page(table_id, pagenum, buf);
-    set_mru(buf);
+    buf->is_dirty = is_dirty;
+    set_mru(buf_num);
     return buf;
 }
 
-buffer_t* add_buf() {
-    buffer_t* tmp;
+int add_buf() {
+    buffer_t* buf;
+    int buf_num;
     if (buf_pool.num_buffers == buf_pool.capacity) {
-        flush_buf(buf_pool.lru);
-        tmp = buf_pool.buffers + buf_pool.lru;
+        flush_buf(buf_pool.buffers + buf_pool.lru);
+        buf_num = buf_pool.lru;
+        buf = buf_pool.buffers + buf_pool.lru;
     } else {
-        tmp = buf_pool.buffers + buf_pool.num_buffers;
+        buf_num = buf_pool.num_buffers;
+        buf = buf_pool.buffers + buf_pool.num_buffers;
     }
-    tmp->is_dirty = 0;
-    tmp->is_pinned = 0;
+    buf = buf_pool.buffers + buf_num;
+    buf->is_dirty = 0;
+    buf->is_pinned = 0;
 
-    return tmp;
+    return buf_num;
 }
 
 buffer_t* buf_alloc_page(table_id) {
-    buffer_t* header_page = get_buf(table_id, 0);
+    buffer_t* header_page = get_buf(table_id, 0, 1);
     header_page->is_dirty = 1;
 
     // case: no free page
     if (header_page->frame.header.free_page_number == 0) {
         // create new page
-        buffer_t* new_page = add_buf();
-        set_mru(new_page);
+        int new_page_num = add_buf();
+        buffer_t* new_page = buf_pool.buffers + new_page_num;
+        set_mru(new_page_num);
         new_page->table_id = table_id;
         new_page->page_num = header_page->frame.header.number_of_pages;
 
@@ -100,7 +120,7 @@ buffer_t* buf_alloc_page(table_id) {
     }
 
     // get one free page from list
-    buffer_t* buf = get_buf(table_id, header_page->frame.header.free_page_number);
+    buffer_t* buf = get_buf(table_id, header_page->frame.header.free_page_number, 1);
     buf->is_dirty = 1;
     pagenum_t free_page_num = header_page->frame.header.free_page_number;
     file_read_page(table_id, free_page_num, buf);
@@ -110,10 +130,10 @@ buffer_t* buf_alloc_page(table_id) {
     return buf;
 }
 
-buffer_t* buf_free_page(int table_id, pagenum_t pagenum) {
+void buf_free_page(int table_id, pagenum_t pagenum) {
     buffer_t* header_page, * p;
-    header_page = get_buf(table_id, 0);
-    p = get_buf(table_id, pagenum);
+    header_page = get_buf(table_id, 0, 1);
+    p = get_buf(table_id, pagenum, 1);
 
     header_page->is_dirty = 1;
     p->is_dirty = 1;
@@ -126,7 +146,7 @@ buffer_t* buf_free_page(int table_id, pagenum_t pagenum) {
 
 void flush_buf(buffer_t* buf) {
     if (buf->is_dirty) {
-        file_write_page(buf->table_id, buf->page_num, &buf->frame);
+        file_write_page(buf->table_id, buf->page_num, buf);
     }
 
     // check if buf is mru
@@ -145,18 +165,29 @@ void flush_buf(buffer_t* buf) {
 }
 
 void set_root(int table_id, int root_num) {
-    buffer_t* header_page = get_buf(table_id, 0);
+    buffer_t* header_page = get_buf(table_id, 0, 1);
     header_page->is_dirty = 1;
     header_page->frame.header.root_page_number = root_num;
 }
 
 int close_table(int table_id) {
-    buffer_t* buf = buf_pool.buffers + buf_pool.lru;
+    buffer_t* buf = buf_pool.buffers + buf_pool.lru, * next;
     while (buf->next != -1) {
-        
+        next = buf_pool.buffers + buf->next;
+        if (buf->table_id == table_id) flush_buf(buf);
+        buf = next;
     }
+    if (buf->table_id == table_id) flush_buf(buf);
+    return 0;
 }
 
 int shutdown_db() {
-
+    buffer_t* buf = buf_pool.buffers + buf_pool.lru, * next;
+    while (buf->next != -1) {
+        next = buf_pool.buffers + buf->next;
+        flush_buf(buf);
+        buf = next;
+    }
+    flush_buf(buf);
+    return 0;
 }

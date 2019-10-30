@@ -4,9 +4,14 @@ int file_open(char* pathname) {
     return open(pathname, O_CREAT | O_NOFOLLOW | O_RDWR | O_SYNC, 0666);
 }
 
-// int file_read_init(int fd, page_t* header_page) {
-//     return read(fd, header_page, PAGE_SIZE);
-// }
+int file_read_init(int table_id, buffer_t* header_page) {
+    int res = read(table_id, header_page, PAGE_SIZE);
+    header_page->table_id = table_id;
+    header_page->page_num = 0;
+    header_page->is_dirty = 0;
+    header_page->is_pinned = 0;
+    return res;
+}
 
 /* Read an on-disk page into the in-memory page structure(dest)
  */
