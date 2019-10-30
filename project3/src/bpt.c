@@ -168,7 +168,6 @@ void insert_into_node(int table_id, buffer_t* parent, int left_index, int64_t ke
 pagenum_t insert_into_node_after_splitting(int table_id, pagenum_t root_num,
                                            buffer_t* parent,
                                            int left_index, int64_t key, pagenum_t right_num) {
-    printf("insert_into_node_after_splitting\n");
     int i, j, split;
     int64_t k_prime;
     buffer_t* new_parent = make_node(table_id), * child;
