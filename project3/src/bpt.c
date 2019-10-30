@@ -1,5 +1,6 @@
 #include "bpt.h"
 
+char* pathnames[10];
 int fds[10];
 int init;
 
@@ -14,9 +15,16 @@ int open_table(char* pathname) {
     // file array is full
     if (fds[9]) return CONFLICT;
 
+    // didn't initialize db
+    if (!init) return BAD_REQUEST;
+
+    // file already opened
+    if (check_pathname(pathname) == CONFLICT) return CONFLICT;
+
     int i = -1;
     while (fds[++i]);
     fds[i] = buf_read_table(pathname);
+    pathnames[i] = pathname;
 
     // open db failed
     if (fds[i] == -1) {

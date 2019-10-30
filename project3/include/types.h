@@ -1,3 +1,6 @@
+#ifndef __TYPES_H__
+#define __TYPES_H__
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -44,6 +47,7 @@ typedef struct buffer_pool_t buffer_pool_t;
 extern int fds[10];
 extern buffer_pool_t buf_pool;
 extern int init;
+extern char* pathnames[10];
 
 /* key, value type for leaf node
  */
@@ -136,3 +140,5 @@ struct buffer_pool_t {
     int mru;
     int lru;
 };
+
+#endif

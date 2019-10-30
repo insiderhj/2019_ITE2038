@@ -1,5 +1,16 @@
 #include "bpt.h"
 
+char* pathnames[10];
+int fds[10];
+
+int check_pathname(char* pathname) {
+    int i;
+    for (i = 0; i < 10; i++) {
+        if (fds[i] != 0 && !strcmp(pathname, pathnames[i])) return CONFLICT;
+    }
+    return 0;
+}
+
 int file_open(char* pathname) {
     return open(pathname, O_CREAT | O_NOFOLLOW | O_RDWR | O_SYNC, 0666);
 }

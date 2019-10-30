@@ -1,6 +1,8 @@
 #include "bpt.h"
 
 buffer_pool_t buf_pool;
+char* pathnames[10];
+int fds[10];
 int init;
 
 int init_db(int num_buf) {
@@ -15,6 +17,12 @@ int init_db(int num_buf) {
     buf_pool.capacity = num_buf;
     buf_pool.mru = -1;
     buf_pool.lru = -1;
+
+    int i;
+    for (i = 0; i < 10; i++) {
+        pathnames[i] = (char*)malloc(sizeof(char) * 512);
+        fds[i] = 0;
+    }
 
     init = 1;
 
@@ -59,6 +67,10 @@ void set_mru(int buf_num) {
     if (buf_pool.mru != -1) buf_pool.buffers[buf_pool.mru].next = buf_num;
     buf_pool.buffers[buf_num].prev = buf_pool.mru;
     buf_pool.mru = buf_num;
+}
+
+void set_pin(buffer_t* buf, uint32_t is_pinned) {
+    buf->is_pinned = is_pinned;
 }
 
 int find_buf(int table_id, pagenum_t pagenum) {
@@ -214,6 +226,11 @@ int close_table(int table_id) {
         buf = buf_pool.buffers + buf_num;
     }
     if (buf->table_id == table_id) flush_buf(buf_num);
+
+    int i = 0;
+    for (i = 0; i < 10; i++) {
+        if (fds[i] == table_id) fds[i] = 0;
+    }
     return 0;
 }
 
@@ -227,7 +244,13 @@ int shutdown_db() {
         buf = buf_pool.buffers + buf_num;
     }
     flush_buf(buf_num);
+
+    int i;
+    for (i = 0; i < 10; i++) {
+        free(pathnames[i]);
+    }
     free(buf_pool.buffers);
+
     init = 0;
     return 0;
 }
