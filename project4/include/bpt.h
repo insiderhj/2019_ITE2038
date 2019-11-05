@@ -4,6 +4,7 @@
 #include "types.h"
 #include "disk_space_manager.h"
 #include "buffer_manager.h"
+#include "printer.h"
 
 // open
 int open_table(char* pathname);
@@ -43,10 +44,5 @@ void redistribute_nodes(int table_id, buffer_t* node, buffer_t* neighbor,
                         int neighbor_index, int k_prime_index, int64_t k_prime);
 pagenum_t delete_entry(buffer_t* header_page, pagenum_t root_num, pagenum_t node_num, int64_t key);
 int db_delete(int table_id, int64_t key);
-
-// print
-void enqueue(Queue* q, pagenum_t data);
-pagenum_t dequeue(Queue* q);
-void print_tree(int table_id);
 
 #endif
