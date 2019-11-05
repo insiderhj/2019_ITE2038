@@ -14,7 +14,7 @@ TARGET_SRC:=$(SRCDIR)main.c
 TARGET_OBJ:=$(SRCDIR)main.o
 
 # Include more files if you write another source file.
-SRCS_FOR_LIB:=$(SRCDIR)bpt.c $(SRCDIR)disk_space_manager.c $(SRCDIR)buffer_manager.c
+SRCS_FOR_LIB:=$(SRCDIR)bpt.c $(SRCDIR)disk_space_manager.c $(SRCDIR)buffer_manager.c $(SRCDIR)printer.c $(SRCDIR)join.c
 OBJS_FOR_LIB:=$(SRCS_FOR_LIB:.c=.o)
 
 CFLAGS+= -g -fPIC -I $(INC)
@@ -32,6 +32,12 @@ $(SRCDIR)disk_space_manager.o:
 $(SRCDIR)buffer_manager.o:
 	$(CC) $(CFLAGS) -o $(SRCDIR)buffer_manager.o -c $(SRCDIR)buffer_manager.c
 
+$(SRCDIR)printer.o:
+	$(CC) $(CFLAGS) -o $(SRCDIR)printer.o -c $(SRCDIR)printer.c
+
+$(SRCDIR)join.o:
+	$(CC) $(CFLAGS) -o $(SRCDIR)join.o -c $(SRCDIR)join.c
+
 $(TARGET): $(OBJS_FOR_LIB) $(TARGET_OBJ)
 	make static_library
 	$(CC) $(CFLAGS) -o $@ $^ -L $(LIBS) -lbpt
@@ -43,4 +49,5 @@ library:
 	gcc -shared -Wl,-soname,libbpt.so -o $(LIBS)libbpt.so $(OBJS_FOR_LIB)
 
 static_library:
+	mkdir -p lib/
 	ar cr $(LIBS)libbpt.a $(OBJS_FOR_LIB)
