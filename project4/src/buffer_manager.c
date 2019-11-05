@@ -254,15 +254,3 @@ int shutdown_db() {
     init = 0;
     return 0;
 }
-
-void print_buf() {
-    printf("buf info - mru: %d, lru: %d\n", buf_pool.mru, buf_pool.lru);
-    int buf_num = buf_pool.mru;
-    buffer_t* buf = buf_pool.buffers + buf_num;
-    while (buf->prev != -1) {
-        printf("buf_num: %d, table_id: %d, pagenum: %d\n", buf_num, buf->table_id, buf->page_num);
-        buf_num = buf->prev;
-        buf = buf_pool.buffers + buf_num;
-    }
-    printf("buf_num: %d, table_id: %d, pagenum: %d\n", buf_num, buf->table_id, buf->page_num);
-}

@@ -25,6 +25,4 @@ void set_root(buffer_t* header_page, int root_num);
 int close_table(int table_id);
 int shutdown_db();
 
-void print_buf();
-
 #endif
