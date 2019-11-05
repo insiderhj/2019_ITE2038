@@ -39,7 +39,3 @@ void file_read_page(int table_id, pagenum_t pagenum, buffer_t* dest) {
 void file_write_page(int table_id, pagenum_t pagenum, const buffer_t* src) {
     pwrite(table_id, src, PAGE_SIZE, OFF(pagenum));
 }
-
-void file_set_parent(int table_id, pagenum_t pagenum, pagenum_t parent_num) {
-    pwrite(table_id, &parent_num, 8, OFF(pagenum));
-}

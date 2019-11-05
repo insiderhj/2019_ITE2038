@@ -5,6 +5,7 @@
 #include "disk_space_manager.h"
 #include "buffer_manager.h"
 #include "printer.h"
+#include "join.h"
 
 // open
 int open_table(char* pathname);
@@ -28,7 +29,7 @@ pagenum_t insert_into_node_after_splitting(buffer_t* header, pagenum_t root_num,
 pagenum_t insert_into_parent(buffer_t* header, pagenum_t root_num, buffer_t* left,
                              int64_t key, buffer_t* right);
 void insert_into_leaf(int table_id, buffer_t* leaf, int64_t key, char* value);
-pagenum_t insert_into_leaf_after_splitting(buffer_t* header_page, pagenum_t root_num, buffer_t* leaf,
+pagenum_t insert_into_leaf_after_splitting(buffer_t* header, pagenum_t root_num, buffer_t* leaf,
                                            int64_t key, char* value);
 int db_insert(int table_id, int64_t key, char* value);
 
@@ -37,12 +38,12 @@ void remove_entry_from_leaf(buffer_t* node, int64_t key);
 void remove_entry_from_node(buffer_t* node, int64_t key);
 pagenum_t adjust_root(buffer_t* header, pagenum_t root_num);
 int get_neighbor_index(buffer_t* parent, pagenum_t node_num);
-pagenum_t coalesce_nodes(buffer_t* header_page, pagenum_t root_num, buffer_t* node,
+pagenum_t coalesce_nodes(buffer_t* header, pagenum_t root_num, buffer_t* node,
                          buffer_t* neighbor, int neighbor_index,
                          int64_t k_prime);
 void redistribute_nodes(int table_id, buffer_t* node, buffer_t* neighbor,
                         int neighbor_index, int k_prime_index, int64_t k_prime);
-pagenum_t delete_entry(buffer_t* header_page, pagenum_t root_num, pagenum_t node_num, int64_t key);
+pagenum_t delete_entry(buffer_t* header, pagenum_t root_num, pagenum_t node_num, int64_t key);
 int db_delete(int table_id, int64_t key);
 
 #endif

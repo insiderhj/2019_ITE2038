@@ -81,16 +81,16 @@ pagenum_t find_leaf(int table_id, pagenum_t root_num, int64_t key) {
  * Otherwise, return non-zero value.
  */
 int db_find(int table_id, int64_t key, char* ret_val) {
-    buffer_t* header_page, * leaf;
+    buffer_t* header, * leaf;
 
-    header_page = get_buf(table_id, 0, 0);
-    if (header_page->frame.header.root_page_number == 0) {
-        unpin(header_page);
+    header = get_buf(table_id, 0, 0);
+    if (header->frame.header.root_page_number == 0) {
+        unpin(header);
         return NOT_FOUND;
     }
 
-    pagenum_t leaf_num = find_leaf(table_id, header_page->frame.header.root_page_number, key);
-    unpin(header_page);
+    pagenum_t leaf_num = find_leaf(table_id, header->frame.header.root_page_number, key);
+    unpin(header);
 
     // leaf not found
     if (leaf_num == 0) return NOT_FOUND;
@@ -362,32 +362,32 @@ int db_insert(int table_id, int64_t key, char* value) {
     char res[VALUE_SIZE];
     if (db_find(table_id, key, res) == 0) return CONFLICT;
 
-    buffer_t* header_page;
+    buffer_t* header;
     pagenum_t root_num;
-    header_page = get_buf(table_id, 0, 1);
+    header = get_buf(table_id, 0, 1);
     
     // case: file has no root page
-    if (header_page->frame.header.root_page_number == 0) {
-        root_num = start_new_tree(header_page, key, value);
-        set_root(header_page, root_num);
-        unpin(header_page);
+    if (header->frame.header.root_page_number == 0) {
+        root_num = start_new_tree(header, key, value);
+        set_root(header, root_num);
+        unpin(header);
         return 0;
     }
 
-    pagenum_t leaf_num = find_leaf(table_id, header_page->frame.header.root_page_number, key);
+    pagenum_t leaf_num = find_leaf(table_id, header->frame.header.root_page_number, key);
     buffer_t* leaf;
     leaf = get_buf(table_id, leaf_num, 1);
     if (leaf->frame.node.number_of_keys < LEAF_ORDER - 1) {
         insert_into_leaf(table_id, leaf, key, value);
-        unpin(header_page);
+        unpin(header);
         unpin(leaf);
         return 0;
     }
 
     root_num = insert_into_leaf_after_splitting(
-        header_page, header_page->frame.header.root_page_number, leaf, key, value);
-    set_root(header_page, root_num);
-    unpin(header_page);
+        header, header->frame.header.root_page_number, leaf, key, value);
+    set_root(header, root_num);
+    unpin(header);
     unpin(leaf);
     return 0;
 }
@@ -419,10 +419,10 @@ void remove_entry_from_node(buffer_t* node, int64_t key) {
 
 /* returns root page's page number
  */
-pagenum_t adjust_root(buffer_t* header_page, pagenum_t root_num) {
+pagenum_t adjust_root(buffer_t* header, pagenum_t root_num) {
     pagenum_t new_root_num;
     buffer_t* root, * new_root;
-    root = get_buf(header_page->table_id, root_num, 1);
+    root = get_buf(header->table_id, root_num, 1);
 
     // case: nonempty root
     if (root->frame.node.number_of_keys > 0) return root_num;
@@ -433,11 +433,11 @@ pagenum_t adjust_root(buffer_t* header_page, pagenum_t root_num) {
     }
     else {
         new_root_num = root->frame.node.one_more_page_number;
-        new_root = get_buf(header_page->table_id, new_root_num, 1);
+        new_root = get_buf(header->table_id, new_root_num, 1);
         new_root->frame.node.parent_page_number = 0;
         unpin(new_root);
     }
-    buf_free_page(header_page, root);
+    buf_free_page(header, root);
     unpin(root);
     
     return new_root_num;
@@ -466,7 +466,7 @@ int get_neighbor_index(buffer_t* parent, pagenum_t node_num) {
  * without exceeding the maximum.
  * returns root page's page number.
  */
-pagenum_t coalesce_nodes(buffer_t* header_page, pagenum_t root_num, buffer_t* node,
+pagenum_t coalesce_nodes(buffer_t* header, pagenum_t root_num, buffer_t* node,
                          buffer_t* neighbor,
                          int neighbor_index, int64_t k_prime) {
     int i, j, neighbor_insertion_index, node_end;
@@ -498,7 +498,7 @@ pagenum_t coalesce_nodes(buffer_t* header_page, pagenum_t root_num, buffer_t* no
         neighbor->frame.node.number_of_keys += node_end;
 
         for (i = neighbor_insertion_index; i < neighbor->frame.node.number_of_keys; i++) {
-            tmp = get_buf(header_page->table_id, neighbor->frame.node.key_page_numbers[i].page_number, 1);
+            tmp = get_buf(header->table_id, neighbor->frame.node.key_page_numbers[i].page_number, 1);
             tmp->frame.node.parent_page_number = neighbor->page_num;
             unpin(tmp);
         }
@@ -514,8 +514,8 @@ pagenum_t coalesce_nodes(buffer_t* header_page, pagenum_t root_num, buffer_t* no
         neighbor->frame.node.right_sibling_page_number = node->frame.node.right_sibling_page_number;
     }
 
-    root_num = delete_entry(header_page, root_num, node->frame.node.parent_page_number, k_prime);
-    buf_free_page(header_page, node);
+    root_num = delete_entry(header, root_num, node->frame.node.parent_page_number, k_prime);
+    buf_free_page(header, node);
     return root_num;
 }
 
@@ -584,7 +584,7 @@ void redistribute_nodes(int table_id, buffer_t* node, buffer_t* neighbor,
  * changes to preserve the B+ tree properties.
  * returns root page's page number after deletion.
  */
-pagenum_t delete_entry(buffer_t* header_page, pagenum_t root_num, pagenum_t node_num, int64_t key) {
+pagenum_t delete_entry(buffer_t* header, pagenum_t root_num, pagenum_t node_num, int64_t key) {
     int min_keys;
     pagenum_t neighbor_num, parent_num, new_root_num;
     int neighbor_index;
@@ -592,7 +592,7 @@ pagenum_t delete_entry(buffer_t* header_page, pagenum_t root_num, pagenum_t node
     int64_t k_prime;
     int capacity;
     buffer_t* node, * neighbor, * parent;
-    node = get_buf(header_page->table_id, node_num, 1);
+    node = get_buf(header->table_id, node_num, 1);
     
     if (node->frame.node.is_leaf) remove_entry_from_leaf(node, key);
     else remove_entry_from_node(node, key);
@@ -600,7 +600,7 @@ pagenum_t delete_entry(buffer_t* header_page, pagenum_t root_num, pagenum_t node
     // case: node is root
     if (root_num == node_num) {
         unpin(node);
-        return adjust_root(header_page, root_num);
+        return adjust_root(header, root_num);
     }
 
     // min_keys = node.node.is_leaf ? cut(LEAF_ORDER - 1) : cut(INTERNAL_ORDER) - 1;
@@ -613,7 +613,7 @@ pagenum_t delete_entry(buffer_t* header_page, pagenum_t root_num, pagenum_t node
     }
 
     // case: number of keys is lower than min_keys
-    parent = get_buf(header_page->table_id, node->frame.node.parent_page_number, 1);
+    parent = get_buf(header->table_id, node->frame.node.parent_page_number, 1);
     
     neighbor_index = get_neighbor_index(parent, node_num);
     k_prime_index = neighbor_index == -1 ? 0 : neighbor_index;
@@ -631,11 +631,11 @@ pagenum_t delete_entry(buffer_t* header_page, pagenum_t root_num, pagenum_t node
     }
     unpin(parent);
 
-    neighbor = get_buf(header_page->table_id, neighbor_num, 1);
+    neighbor = get_buf(header->table_id, neighbor_num, 1);
     capacity = node->frame.node.is_leaf ? LEAF_ORDER : INTERNAL_ORDER - 1;
     
     if (neighbor->frame.node.number_of_keys + node->frame.node.number_of_keys < capacity) {
-        new_root_num = coalesce_nodes(header_page, root_num, node, neighbor,
+        new_root_num = coalesce_nodes(header, root_num, node, neighbor,
                               neighbor_index, k_prime);
         unpin(node);
         unpin(neighbor);
@@ -643,7 +643,7 @@ pagenum_t delete_entry(buffer_t* header_page, pagenum_t root_num, pagenum_t node
     }
     
     else {
-        redistribute_nodes(header_page->table_id, node, neighbor, neighbor_index,
+        redistribute_nodes(header->table_id, node, neighbor, neighbor_index,
                                   k_prime_index, k_prime);
         unpin(node);
         unpin(neighbor);
@@ -661,12 +661,12 @@ int db_delete(int table_id, int64_t key) {
     // no root or no such key
     if (leaf_num == 0 || db_find(table_id, key, res) == NOT_FOUND) return NOT_FOUND;
 
-    buffer_t* header_page;
-    header_page = get_buf(table_id, 0, 1);
-    leaf_num = find_leaf(table_id, header_page->frame.header.root_page_number, key);
+    buffer_t* header;
+    header = get_buf(table_id, 0, 1);
+    leaf_num = find_leaf(table_id, header->frame.header.root_page_number, key);
 
-    header_page->frame.header.root_page_number = delete_entry(header_page, header_page->frame.header.root_page_number,
+    header->frame.header.root_page_number = delete_entry(header, header->frame.header.root_page_number,
                                                         leaf_num, key);
-    unpin(header_page);
+    unpin(header);
     return 0;
 }

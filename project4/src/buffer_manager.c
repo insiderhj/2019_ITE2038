@@ -43,7 +43,6 @@ int buf_read_table(char* pathname) {
     return table_id;
 }
 
-// TODO
 void set_mru(int buf_num) {
     if (buf_pool.mru == buf_num) return;
 
