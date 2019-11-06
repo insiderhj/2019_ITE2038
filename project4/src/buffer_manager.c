@@ -6,11 +6,12 @@ int fds[10];
 int init;
 
 int init_db(int num_buf) {
-    // pool already exists
-    if (init) return CONFLICT;
-
     // size is equal to or less than zero
     if (num_buf <= 0) return BAD_REQUEST;
+
+    if (init) {
+        shutdown_db();
+    }
 
     buf_pool.buffers = (buffer_t*)calloc(num_buf, sizeof(buffer_t));
     buf_pool.num_buffers = 0;

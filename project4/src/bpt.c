@@ -9,6 +9,8 @@ int init;
  * Otherwise, return negative value. (This table id will be used for future assignment.)
  */
 int open_table(char* pathname) {
+    if (!init) return BAD_REQUEST;
+
     // pathname is null
     if (pathname == NULL) return BAD_REQUEST;
 
@@ -20,9 +22,6 @@ int open_table(char* pathname) {
 
     // file array is full
     if (i == 10) return BAD_REQUEST;
-
-    // didn't initialize db
-    if (!init) return BAD_REQUEST;
 
     // file already opened
     if (check_pathname(pathname) == CONFLICT) return CONFLICT;
