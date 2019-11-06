@@ -167,7 +167,7 @@ buffer_t* buf_alloc_page(buffer_t* header) {
         header->frame.header.free_page_number = new_page->page_num;
 
         header->frame.header.number_of_pages++;
-        unpin(new_page_num);
+        unpin(new_page);
     }
 
     // get one free page from list
