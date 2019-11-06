@@ -17,7 +17,11 @@ int main( int argc, char ** argv ) {
             case 'o':
                 scanf("%s", file_name);
                 file_num = open_table(file_name);
-                printf("%s: %d\n", file_name, file_num);
+                printf("%d. %s\n", file_num, file_name);
+                break;
+            case 'c':
+                scanf("%d", &file_num);
+                close_table(file_num);
                 break;
             case 'd':
                 scanf("%d %ld", &file_num, &key);
@@ -34,7 +38,7 @@ int main( int argc, char ** argv ) {
                 break;
             case 'j':
                 scanf("%d %d %s", &first_file, &second_file, file_name);
-                join_table(fds[first_file], fds[second_file], file_name);
+                join_table(first_file, second_file, file_name);
                 break;
             case 'l':
                 for (int i = 0; i < 10; i++) {

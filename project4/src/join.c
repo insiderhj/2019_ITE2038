@@ -43,10 +43,13 @@ void advance(buffer_t** buf, int* idx) {
 }
 
 void write_csv(int fd, int64_t key_1, char* value_1, int64_t key_2, char* value_2) {
-    dprintf(fd, "%d,%s,%d,%s\n", key_1, value_1, key_2, value_2);
+    dprintf(fd, "%ld,%s,%ld,%s\n", key_1, value_1, key_2, value_2);
 }
 
 int join_table(int table_id_1, int table_id_2, char * pathname) {
+    if (!init) return BAD_REQUEST;
+    if (check_fd(table_id_1) == NOT_FOUND || check_fd(table_id_2) == NOT_FOUND) return NOT_FOUND;
+
     int join_file = open_join_file(pathname);
     if (join_file == CONFLICT) return CONFLICT;
     if (join_file == -1) return INTERNAL_ERR;

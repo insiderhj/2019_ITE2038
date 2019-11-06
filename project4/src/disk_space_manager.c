@@ -11,6 +11,16 @@ int check_pathname(char* pathname) {
     return 0;
 }
 
+int check_fd(int fd) {
+    if (fd <= 0) return NOT_FOUND;
+
+    int i;
+    for (i = 0; i < 10; i++) {
+        if (fds[i] == fd) return 0;
+    }
+    return NOT_FOUND;
+}
+
 int file_open(char* pathname) {
     return open(pathname, O_CREAT | O_NOFOLLOW | O_RDWR | O_SYNC, 0666);
 }

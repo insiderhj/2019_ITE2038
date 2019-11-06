@@ -222,7 +222,12 @@ void set_root(buffer_t* header, int root_num) {
 }
 
 int close_table(int table_id) {
+    if (!init) return BAD_REQUEST;
+    if (check_fd(table_id) == NOT_FOUND) return NOT_FOUND;
+
     int buf_num = buf_pool.lru, next_num;
+    if (buf_num == -1) return 0;
+
     buffer_t* buf = buf_pool.buffers + buf_num;
     while (buf->next != -1) {
         next_num = buf->next;
@@ -240,7 +245,11 @@ int close_table(int table_id) {
 }
 
 int shutdown_db() {
+    if (!init) return BAD_REQUEST;
+
     int buf_num = buf_pool.lru, next_num;
+    if (buf_num == -1) return 0;
+
     buffer_t* buf = buf_pool.buffers + buf_num;
     while (buf->next != -1) {
         next_num = buf->next;

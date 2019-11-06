@@ -13,11 +13,11 @@
 #define PAGE_SIZE 4096
 #define OFF(pagenum) ((pagenum) * PAGE_SIZE)
 
-#define INTERNAL_ORDER 249
-#define LEAF_ORDER 32
+// #define INTERNAL_ORDER 249
+// #define LEAF_ORDER 32
 
-// #define INTERNAL_ORDER 5
-// #define LEAF_ORDER 4
+#define INTERNAL_ORDER 5
+#define LEAF_ORDER 4
 
 #define VALUE_SIZE 120
 

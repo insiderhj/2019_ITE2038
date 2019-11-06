@@ -49,7 +49,7 @@ void print_tree(int table_id) {
 
     while (q.item_count != 0) {
         tmp_num = dequeue(&q);
-        printf("(%ld) ", tmp_num);
+        printf("(%lu) ", tmp_num);
         tmp = get_buf(table_id, tmp_num, 0);
         
         // case: leaf node
@@ -84,9 +84,9 @@ void print_buf() {
     int buf_num = buf_pool.mru;
     buffer_t* buf = buf_pool.buffers + buf_num;
     while (buf->prev != -1) {
-        printf("buf_num: %d, table_id: %d, pagenum: %d\n", buf_num, buf->table_id, buf->page_num);
+        printf("buf_num: %d, table_id: %d, pagenum: %lu\n", buf_num, buf->table_id, buf->page_num);
         buf_num = buf->prev;
         buf = buf_pool.buffers + buf_num;
     }
-    printf("buf_num: %d, table_id: %d, pagenum: %d\n", buf_num, buf->table_id, buf->page_num);
+    printf("buf_num: %d, table_id: %d, pagenum: %lu\n", buf_num, buf->table_id, buf->page_num);
 }

@@ -81,6 +81,9 @@ pagenum_t find_leaf(int table_id, pagenum_t root_num, int64_t key) {
  * Otherwise, return non-zero value.
  */
 int db_find(int table_id, int64_t key, char* ret_val) {
+    if (!init) return BAD_REQUEST;
+    if (check_fd(table_id) == NOT_FOUND) return NOT_FOUND;
+
     buffer_t* header, * leaf;
 
     header = get_buf(table_id, 0, 0);
@@ -357,7 +360,8 @@ pagenum_t insert_into_leaf_after_splitting(buffer_t* header, pagenum_t root_num,
  * If success, return 0. Otherwise, return non-zero value.
  */
 int db_insert(int table_id, int64_t key, char* value) {
-    if (table_id == 0) return BAD_REQUEST;
+    if (!init) return BAD_REQUEST;
+    if (check_fd(table_id) == NOT_FOUND) return NOT_FOUND; 
 
     char res[VALUE_SIZE];
     if (db_find(table_id, key, res) == 0) return CONFLICT;
@@ -655,15 +659,17 @@ pagenum_t delete_entry(buffer_t* header, pagenum_t root_num, pagenum_t node_num,
  * If success, return 0. Otherwise, return non-zero value.
  */
 int db_delete(int table_id, int64_t key) {
+    if (!init) return BAD_REQUEST;
+    if (check_fd(table_id) == NOT_FOUND) return NOT_FOUND;
+
     char res[VALUE_SIZE];
     pagenum_t leaf_num;
-
-    // no root or no such key
-    if (leaf_num == 0 || db_find(table_id, key, res) == NOT_FOUND) return NOT_FOUND;
-
     buffer_t* header;
     header = get_buf(table_id, 0, 1);
     leaf_num = find_leaf(table_id, header->frame.header.root_page_number, key);
+
+    // no root or no such key
+    if (leaf_num == 0 || db_find(table_id, key, res) == NOT_FOUND) return NOT_FOUND;
 
     header->frame.header.root_page_number = delete_entry(header, header->frame.header.root_page_number,
                                                         leaf_num, key);
