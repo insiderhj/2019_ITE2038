@@ -32,14 +32,15 @@ int buf_read_table(char* pathname) {
     int table_id = file_open(pathname);
     if (table_id == -1) return table_id;
 
-    int header_page_num = add_buf();
-    buffer_t* header_page = buf_pool.buffers + header_page_num;
-    set_mru(header_page_num);
-    if (!file_read_init(table_id, header_page)) {
-        memset(header_page, 0, PAGE_SIZE);
-        header_page->frame.header.number_of_pages = 1;
+    int header_num = add_buf();
+    buffer_t* header = buf_pool.buffers + header_num;
+    set_mru(header_num);
+    if (!file_read_init(table_id, header)) {
+        memset(header, 0, PAGE_SIZE);
+        header->frame.header.number_of_pages = 1;
     }
-    header_page->is_dirty = 1;
+    header->is_dirty = 1;
+    unpin(header);
     return table_id;
 }
 
@@ -98,8 +99,8 @@ buffer_t* get_buf(int table_id, pagenum_t pagenum, uint32_t is_dirty) {
         file_read_page(table_id, pagenum, buf);
     } else {
         buf = buf_pool.buffers + buf_num;
+        buf->is_pinned = 1;
     }
-    buf->is_pinned = 1;
     buf->is_dirty |= is_dirty;
 
     set_mru(buf_num);
@@ -140,8 +141,8 @@ int add_buf() {
         buf = buf_pool.buffers + buf_pool.num_buffers;
     }
     buf = buf_pool.buffers + buf_num;
+    buf->is_pinned = 1;
     buf->is_dirty = 0;
-    buf->is_pinned = 0;
     buf->is_allocated = 1;
     buf->next = -1;
     buf->prev = -1;
@@ -151,39 +152,40 @@ int add_buf() {
     return buf_num;
 }
 
-buffer_t* buf_alloc_page(buffer_t* header_page) {
+buffer_t* buf_alloc_page(buffer_t* header) {
     // case: no free page
-    if (header_page->frame.header.free_page_number == 0) {
+    if (header->frame.header.free_page_number == 0) {
         // create new page
         int new_page_num = add_buf();
         buffer_t* new_page = buf_pool.buffers + new_page_num;
         set_mru(new_page_num);
-        new_page->table_id = header_page->table_id;
-        new_page->page_num = header_page->frame.header.number_of_pages;
+        new_page->table_id = header->table_id;
+        new_page->page_num = header->frame.header.number_of_pages;
 
         // modify free page list
-        new_page->frame.free.next_free_page_number = header_page->frame.header.free_page_number;
-        header_page->frame.header.free_page_number = new_page->page_num;
+        new_page->frame.free.next_free_page_number = header->frame.header.free_page_number;
+        header->frame.header.free_page_number = new_page->page_num;
 
-        header_page->frame.header.number_of_pages++;
+        header->frame.header.number_of_pages++;
+        unpin(new_page_num);
     }
 
     // get one free page from list
-    buffer_t* buf = get_buf(header_page->table_id, header_page->frame.header.free_page_number, 1);
-    pagenum_t free_page_num = header_page->frame.header.free_page_number;
+    buffer_t* buf = get_buf(header->table_id, header->frame.header.free_page_number, 1);
+    pagenum_t free_page_num = header->frame.header.free_page_number;
     // file_read_page(table_id, free_page_num, buf);
 
     // modify free page list
-    header_page->frame.header.free_page_number = buf->frame.free.next_free_page_number;
+    header->frame.header.free_page_number = buf->frame.free.next_free_page_number;
     return buf;
 }
 
-void buf_free_page(buffer_t* header_page, buffer_t* p) {
+void buf_free_page(buffer_t* header, buffer_t* p) {
     memset(p, 0, PAGE_SIZE);
     
-    pagenum_t first_free_page = header_page->frame.header.free_page_number;
+    pagenum_t first_free_page = header->frame.header.free_page_number;
     p->frame.free.next_free_page_number = first_free_page;
-    header_page->frame.header.free_page_number = p->page_num;
+    header->frame.header.free_page_number = p->page_num;
 }
 
 void flush_buf(int buf_num) {
@@ -215,8 +217,8 @@ void flush_buf(int buf_num) {
     buf_pool.num_buffers--;
 }
 
-void set_root(buffer_t* header_page, int root_num) {
-    header_page->frame.header.root_page_number = root_num;
+void set_root(buffer_t* header, int root_num) {
+    header->frame.header.root_page_number = root_num;
 }
 
 int close_table(int table_id) {
