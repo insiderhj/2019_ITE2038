@@ -18,29 +18,29 @@ int main( int argc, char ** argv ) {
         switch (instruction) {
             case 'o':
                 scanf("%s", file_name);
-                if ((file_num = open_table(file_name)) <= 0) printf("ERROR CODE: %d\n", file_num);
-                else printf("%d. %s\n", file_num, file_name);
+                result = file_num = open_table(file_name);
+                if (result == 0) printf("%d. %s\n", file_num, file_name);
                 break;
             case 'c':
                 scanf("%d", &file_num);
-                if ((result = close_table(file_num)) != 0) printf("ERROR CODE: %d\n", result);
+                result = close_table(file_num);
                 break;
             case 'd':
                 scanf("%d %ld", &file_num, &key);
-                if ((result = db_delete(file_num, key)) != 0) printf("ERROR CODE: %d\n", result);
+                result = db_delete(file_num, key);
                 break;
             case 'i':
                 scanf("%d %ld %s", &file_num, &key, value);
-                db_insert(file_num, key, value);
+                result = db_insert(file_num, key, value);
                 break;
 	        case 'f':
                 scanf("%d %ld", &file_num, &key);
-                if (db_find(file_num, key, value) == NOT_FOUND) printf("key %ld not found\n", key);
-                else printf("%ld: %s\n", key, value);
+                result = db_find(file_num, key, value);
+                if (result == 0) printf("%ld: %s\n", key, value);
                 break;
             case 'j':
                 scanf("%d %d %s", &first_file, &second_file, file_name);
-                if ((result = join_table(first_file, second_file, file_name)) != 0) printf("ERROR CODE: %d\n", result);
+                result = join_table(first_file, second_file, file_name);
                 break;
             case 'l':
                 for (int i = 0; i < 10; i++) {
@@ -50,12 +50,14 @@ int main( int argc, char ** argv ) {
             case 'p':
                 scanf("%d", &file_num);
                 print_tree(file_num);
+                result = 0;
                 break;
             case 'q':
                 while (getchar() != (int)'\n');
                 shutdown_db();
                 return 0;
         }
+        if (result < 0) printf("ERROR CODE: %d\n", result);
         while (getchar() != (int)'\n');
         printf("> ");
     }
