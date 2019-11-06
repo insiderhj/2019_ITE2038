@@ -49,5 +49,5 @@ library:
 	gcc -shared -Wl,-soname,libbpt.so -o $(LIBS)libbpt.so $(OBJS_FOR_LIB)
 
 static_library:
-	mkdir -p lib/
+	mkdir -p $(LIBS)
 	ar cr $(LIBS)libbpt.a $(OBJS_FOR_LIB)
