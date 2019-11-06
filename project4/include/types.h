@@ -21,7 +21,7 @@
 
 #define VALUE_SIZE 120
 
-#define QUEUE_SIZE 1000
+#define QUEUE_SIZE 200000
 
 // err numbers
 #define BAD_REQUEST -400

@@ -112,7 +112,7 @@ int db_find(int table_id, int64_t key, char* ret_val) {
     }
     
     // copy value into ret_val
-    strcpy(ret_val, leaf->frame.node.key_values[i].value);
+    if (ret_val) strcpy(ret_val, leaf->frame.node.key_values[i].value);
     unpin(leaf);
     return 0;
 }
