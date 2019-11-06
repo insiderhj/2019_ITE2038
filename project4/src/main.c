@@ -9,6 +9,8 @@ int main( int argc, char ** argv ) {
     int file_num = 0;
     int first_file, second_file;
     char file_name[512];
+    int result;
+
     init_db(500);
 
     printf("> ");
@@ -16,16 +18,16 @@ int main( int argc, char ** argv ) {
         switch (instruction) {
             case 'o':
                 scanf("%s", file_name);
-                file_num = open_table(file_name);
-                printf("%d. %s\n", file_num, file_name);
+                if ((file_num = open_table(file_name)) <= 0) printf("ERROR CODE: %d\n", file_num);
+                else printf("%d. %s\n", file_num, file_name);
                 break;
             case 'c':
                 scanf("%d", &file_num);
-                close_table(file_num);
+                if ((result = close_table(file_num)) != 0) printf("ERROR CODE: %d\n", result);
                 break;
             case 'd':
                 scanf("%d %ld", &file_num, &key);
-                db_delete(file_num, key);
+                if ((result = db_delete(file_num, key)) != 0) printf("ERROR CODE: %d\n", result);
                 break;
             case 'i':
                 scanf("%d %ld %s", &file_num, &key, value);
@@ -38,7 +40,7 @@ int main( int argc, char ** argv ) {
                 break;
             case 'j':
                 scanf("%d %d %s", &first_file, &second_file, file_name);
-                join_table(first_file, second_file, file_name);
+                if ((result = join_table(first_file, second_file, file_name)) != 0) printf("ERROR CODE: %d\n", result);
                 break;
             case 'l':
                 for (int i = 0; i < 10; i++) {
