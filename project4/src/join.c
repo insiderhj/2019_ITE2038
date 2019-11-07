@@ -9,7 +9,7 @@ int open_join_file(char* pathname) {
         if (fds[i] && strcmp(pathnames[i], pathname) == 0) return CONFLICT;
     }
 
-    return open(pathname, O_CREAT | O_NOFOLLOW | O_RDWR | O_SYNC | O_TRUNC, 0666);
+    return open(pathname, O_CREAT | O_NOFOLLOW | O_RDWR | O_TRUNC, 0666);
 }
 
 pagenum_t find_leftmost_leaf(int table_id, pagenum_t root_num) {

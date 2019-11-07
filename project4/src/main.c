@@ -1,6 +1,9 @@
 #include "bpt.h"
 #include <time.h>
+
 int fds[10];
+
+int test(char* pathname);
 
 int main( int argc, char ** argv ) {
     char instruction;
@@ -48,17 +51,11 @@ int main( int argc, char ** argv ) {
                 break;
             case 'p':
                 scanf("%d", &file_num);
-                print_tree(file_num);
-                result = 0;
+                result = print_table(file_num);
                 break;
-            // case 't':
-            //     for (int i = 0; i < 4000; i++) {
-            //         db_insert(3, r[i], "a");
-            //     }
-            //     for (int i = 0; i < 3000; i++) {
-            //         db_delete(3, i);
-            //     }
-            //     break;
+            case 't':
+                result = test("input.txt");
+                break;
             case 'q':
                 while (getchar() != (int)'\n');
                 shutdown_db();
@@ -72,49 +69,48 @@ int main( int argc, char ** argv ) {
     return 0;
 }
 
-// int main() {
-//     FILE* fp = fopen("input.txt", "r");
-//     int instruction, count = 0, table_size = 0;
-//     int tables[10];
-//     char value[VALUE_SIZE];
-//     int table_num;
-//     int result;
-//     int64_t key;
-//     init_db(100000);
+int test(char* pathname) {
+    FILE* fp = fopen(pathname, "r");
+    int instruction, count = 0, table_size = 0;
+    int tables[10];
+    char value[VALUE_SIZE];
+    int table_num;
+    int result;
+    int64_t key;
 
-//     double start_time = (double)clock() / CLOCKS_PER_SEC;
-//     while (fscanf(fp, "%d", &instruction) != EOF) {
-//         count++;
-//         if (count % 10000 == 0) printf("%d\n", count);
-//         switch (instruction) {
-//             case 0:
-//                 fscanf(fp, "%s", value);
-//                 tables[table_size++] = open_table(value);
-//                 break;
-//             case 1:
-//                 fscanf(fp, "%d %ld %s", &table_num, &key, value);
-//                 result = db_insert(tables[table_num - 1], key, value);
-//                 break;
-//             case 2:
-//                 fscanf(fp, "%d %ld", &table_num, &key);
-//                 result = db_find(tables[table_num - 1], key, NULL);
-//                 break;
-//             case 3:
-//                 fscanf(fp, "%d %ld", &table_num, &key);
-//                 result = db_delete(tables[table_num - 1], key);
-//                 break;
-//             case 4:
-//                 fscanf(fp, "%d", &table_num);
-//                 result = close_table(tables[table_num - 1]);
-//                 break;
-//             case 10:
-//                 shutdown_db();
-//                 double end_time = (double)clock() / CLOCKS_PER_SEC;
-//                 printf(" / %lf sec elapsed\n", end_time - start_time);
-//                 return 0;
-//         }
-//     }
-//     print_tree(tables[0]);
+    double start_time = (double)clock() / CLOCKS_PER_SEC;
+    while (fscanf(fp, "%d", &instruction) != EOF) {
+        count++;
+        if (count % 10000 == 0) printf("%d\n", count);
+        switch (instruction) {
+            case 0:
+                fscanf(fp, "%s", value);
+                tables[table_size++] = open_table(value);
+                break;
+            case 1:
+                fscanf(fp, "%d %ld %s", &table_num, &key, value);
+                result = db_insert(tables[table_num - 1], key, value);
+                break;
+            case 2:
+                fscanf(fp, "%d %ld", &table_num, &key);
+                result = db_find(tables[table_num - 1], key, NULL);
+                break;
+            case 3:
+                fscanf(fp, "%d %ld", &table_num, &key);
+                result = db_delete(tables[table_num - 1], key);
+                break;
+            case 4:
+                fscanf(fp, "%d", &table_num);
+                result = close_table(tables[table_num - 1]);
+                break;
+            case 10:
+                shutdown_db();
+                double end_time = (double)clock() / CLOCKS_PER_SEC;
+                printf(" / %lf sec elapsed\n", end_time - start_time);
+                break;
+        }
+    }
+    fclose(fp);
 
-//     return 0;
-// }
+    return 0;
+}

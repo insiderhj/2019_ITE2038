@@ -6,7 +6,7 @@
 // print
 void enqueue(Queue* q, pagenum_t data);
 pagenum_t dequeue(Queue* q);
-void print_tree(int table_id);
+int print_table(int table_id);
 
 void print_buf();
 

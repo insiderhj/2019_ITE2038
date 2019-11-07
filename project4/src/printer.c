@@ -22,7 +22,8 @@ pagenum_t dequeue(Queue* q) {
     return data;  
 }
 
-void print_tree(int table_id) {
+int print_table(int table_id) {
+    if (check_fd(table_id) == NOT_FOUND) return NOT_FOUND;
     Queue q;
     int i;
     pagenum_t tmp_num;
@@ -41,7 +42,7 @@ void print_tree(int table_id) {
     // case: no root
     if (tmp_num == 0) {
         printf("empty tree\n");
-        return;
+        return 0;
     }
 
     // enqueue root number
@@ -77,6 +78,7 @@ void print_tree(int table_id) {
         unpin(tmp);
     }
     printf("\n");
+    return 0;
 }
 
 void print_buf() {
