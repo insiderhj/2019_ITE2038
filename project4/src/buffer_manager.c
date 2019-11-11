@@ -215,6 +215,7 @@ void flush_buf(int buf_num) {
     }
 
     buf->is_allocated = 0;
+    unpin(buf);
     buf_pool.num_buffers--;
 }
 
