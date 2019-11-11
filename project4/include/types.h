@@ -49,21 +49,24 @@ extern buffer_pool_t buf_pool;
 extern int init;
 extern char pathnames[10][512];
 
-/* key, value type for leaf node
+/**
+ * key, value type for leaf node
  */
 struct key_value_t {
     int64_t key;
     char value[VALUE_SIZE];
 };
 
-/* key, page_number type for internal node
+/**
+ * key, page_number type for internal node
  */
 struct key_page_t {
     int64_t key;
     pagenum_t page_number;
 };
 
-/* first page (offset 0-4095) of a data file
+/**
+ * first page (offset 0-4095) of a data file
  * contains metadata.
  */
 struct header_page_t {
@@ -73,7 +76,8 @@ struct header_page_t {
     int8_t reserved[4072];
 };
 
-/* free page layout
+/**
+ * free page layout
  * linked and allocation is managed by the free page list.
  */
 struct free_page_t {
@@ -81,7 +85,8 @@ struct free_page_t {
     int8_t not_used[4088];
 };
 
-/* Internal/Leaf page
+/**
+ * Internal/Leaf page
  */
 struct node_page_t {
     pagenum_t parent_page_number;
@@ -106,7 +111,8 @@ struct node_page_t {
     };
 };
 
-/* in-memory page structure
+/**
+ * in-memory page structure
  */
 struct page_t {
     union{
