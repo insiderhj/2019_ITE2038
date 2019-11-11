@@ -43,9 +43,9 @@ void write_csv(int fd, int64_t key_1, char* value_1, int64_t key_2, char* value_
 /**
  * Join tables.
  * 
- * @param table_id_1
- * @param table_id_2
- * @param pathname
+ * @param table_id_1 table id of first table
+ * @param table_id_2 table id of second table
+ * @param pathname pathname of file to save result
  * @returns 0 if success. Otherwise, return negative value
  */
 int join_table(int table_id_1, int table_id_2, char * pathname);
