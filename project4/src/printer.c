@@ -30,6 +30,8 @@ int print_table(int table_id) {
     buffer_t* header_page, * tmp;
     int64_t enter_key;
 
+    int fd = open("print_table_result.txt", O_CREAT | O_NOFOLLOW | O_RDWR | O_TRUNC, 0666);
+
     q.front = 0;
     q.rear = -1;
     q.item_count = 0;
@@ -41,7 +43,7 @@ int print_table(int table_id) {
     
     // case: no root
     if (tmp_num == 0) {
-        printf("empty tree\n");
+        dprintf(fd, "empty tree\n");
         return 0;
     }
 
@@ -50,34 +52,34 @@ int print_table(int table_id) {
 
     while (q.item_count != 0) {
         tmp_num = dequeue(&q);
-        printf("(%lu) ", tmp_num);
+        dprintf(fd, "(%lu) ", tmp_num);
         tmp = get_buf(table_id, tmp_num, 0);
         
         // case: leaf node
         if (tmp->frame.node.is_leaf) {
             for (i = 0; i < tmp->frame.node.number_of_keys; i++) {
-                printf("%ld ", tmp->frame.node.key_values[i].key);
+                dprintf(fd, "%ld ", tmp->frame.node.key_values[i].key);
             }
-            printf("| ");
+            dprintf(fd, "| ");
         }
         else {
             enqueue(&q, tmp->frame.node.one_more_page_number);
             for (i = 0; i < tmp->frame.node.number_of_keys; i++) {
-                printf("%ld ", tmp->frame.node.key_page_numbers[i].key);
+                dprintf(fd, "%ld ", tmp->frame.node.key_page_numbers[i].key);
                 enqueue(&q, tmp->frame.node.key_page_numbers[i].page_number);
             }
-            printf("| ");
+            dprintf(fd, "| ");
 
             // case: last node in the level
             if (header_page->frame.header.root_page_number == tmp_num ||
                 tmp->frame.node.key_page_numbers[0].key >= enter_key) {
-                printf("\n");
+                dprintf(fd, "\n");
                 enter_key = tmp->frame.node.key_page_numbers[tmp->frame.node.number_of_keys - 1].key;
             }
         }
         unpin(tmp);
     }
-    printf("\n");
+    dprintf(fd, "\n");
     return 0;
 }
 

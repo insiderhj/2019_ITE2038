@@ -4,10 +4,6 @@ char pathnames[10][512];
 int fds[10];
 int init;
 
-/* Open existing data file using ‘pathname’ or create one if not existed.
- * If success, return the unique table id, which represents the own table in this database.
- * Otherwise, return negative value. (This table id will be used for future assignment.)
- */
 int open_table(char* pathname) {
     if (!init) return BAD_REQUEST;
 
@@ -37,16 +33,10 @@ int open_table(char* pathname) {
     return fds[i];
 }
 
-/* Finds the appropriate place to
- * split a node that is too big into two.
- */
 int cut(int len) {
     return len % 2 == 0 ? len / 2 : len / 2 + 1;
 }
 
-/* Traces the path from the root to a leaf, searching by key
- * Returns the leaf page's page number containing the given key.
- */
 pagenum_t find_leaf(int table_id, pagenum_t root_num, int64_t key) {
     int i;
     pagenum_t c_num = root_num;
@@ -74,11 +64,6 @@ pagenum_t find_leaf(int table_id, pagenum_t root_num, int64_t key) {
     return c_num;
 }
 
-/* Find the record containing input ‘key’.
- * If found matching ‘key’,
- * store matched ‘value’ string in ret_val and return 0.
- * Otherwise, return non-zero value.
- */
 int db_find(int table_id, int64_t key, char* ret_val) {
     if (!init) return BAD_REQUEST;
     if (check_fd(table_id) == NOT_FOUND) return NOT_FOUND;
@@ -123,10 +108,6 @@ buffer_t* make_node(buffer_t* header) {
     return node;
 }
 
-/* First insertion:
- * start a new tree.
- * returns new root's page number.
- */
 pagenum_t start_new_tree(buffer_t* header, int64_t key, char* value) {
     buffer_t* root = make_node(header);
     root->frame.node.is_leaf = true;
@@ -138,11 +119,6 @@ pagenum_t start_new_tree(buffer_t* header, int64_t key, char* value) {
     return root->page_num;
 }
 
-/* Creates a new root for two subtrees
- * and inserts the appropriate key into
- * the new root.
- * returns new root's page number
- */
 pagenum_t insert_into_new_root(buffer_t* header, buffer_t* left,
                                int64_t key, buffer_t* right) {
     buffer_t* root = make_node(header);
@@ -159,10 +135,6 @@ pagenum_t insert_into_new_root(buffer_t* header, buffer_t* left,
     return root->page_num;
 }
 
-/* Helper function used in insert_into_parent
- * to find the index of the parent's pointer to
- * the node to the left of the key to be inserted.
- */
 int get_left_index(buffer_t* parent, pagenum_t left_num) {
     if (parent->frame.node.one_more_page_number == left_num) return 0;
 
@@ -174,10 +146,6 @@ int get_left_index(buffer_t* parent, pagenum_t left_num) {
     return left_index;
 }
 
-/* Inserts a new key and pointer to a node
- * into a node into which these can fit
- * without violating the B+ tree properties.
- */
 void insert_into_node(int table_id, buffer_t* parent, int left_index, int64_t key, pagenum_t right_num) {
     int i;
     for (i = parent->frame.node.number_of_keys; i > left_index; i--) {
@@ -190,11 +158,6 @@ void insert_into_node(int table_id, buffer_t* parent, int left_index, int64_t ke
     parent->frame.node.number_of_keys++;
 }
 
-/* Inserts a new key and pointer to a node
- * into a node, causing the node's size to exceed
- * the order, and causing the node to split into two.
- * returns root page's page number
- */
 pagenum_t insert_into_node_after_splitting(buffer_t* header, pagenum_t root_num,
                                            buffer_t* parent,
                                            int left_index, int64_t key, pagenum_t right_num) {
@@ -257,9 +220,6 @@ pagenum_t insert_into_node_after_splitting(buffer_t* header, pagenum_t root_num,
     return new_root_num;
 }
 
-/* Inserts a new node (leaf or internal node) into the B+ tree.
- * Returns the root page's page number after insertion.
- */
 pagenum_t insert_into_parent(buffer_t* header, pagenum_t root_num, buffer_t* left,
                              int64_t key, buffer_t* right) {
     int left_index;
@@ -285,8 +245,6 @@ pagenum_t insert_into_parent(buffer_t* header, pagenum_t root_num, buffer_t* lef
     return new_root_num;
 }
 
-/* Inserts a new pointer to a record and its corresponding key into a leaf.
- */
 void insert_into_leaf(int table_id, buffer_t* leaf, int64_t key, char* value) {
     int i, insertion_point = 0;
 
@@ -303,10 +261,6 @@ void insert_into_leaf(int table_id, buffer_t* leaf, int64_t key, char* value) {
     leaf->frame.node.number_of_keys++;
 }
 
-/* Inserts a new key and pointer
- * to a new record into a leaf so as to exceed
- * the tree's order, causing the leaf to be split in half.
- */
 pagenum_t insert_into_leaf_after_splitting(buffer_t* header, pagenum_t root_num, buffer_t* leaf,
                                       int64_t key, char* value) {
     buffer_t* new_leaf = make_node(header);
@@ -355,9 +309,6 @@ pagenum_t insert_into_leaf_after_splitting(buffer_t* header, pagenum_t root_num,
     return new_root_num;
 }
 
-/* Insert input ‘key/value’ (record) to data file at the right place.
- * If success, return 0. Otherwise, return non-zero value.
- */
 int db_insert(int table_id, int64_t key, char* value) {
     if (!init) return BAD_REQUEST;
     if (check_fd(table_id) == NOT_FOUND) return NOT_FOUND; 
@@ -420,15 +371,16 @@ void remove_entry_from_node(buffer_t* node, int64_t key) {
     node->frame.node.number_of_keys--;
 }
 
-/* returns root page's page number
- */
 pagenum_t adjust_root(buffer_t* header, pagenum_t root_num) {
     pagenum_t new_root_num;
     buffer_t* root, * new_root;
     root = get_buf(header->table_id, root_num, 1);
 
     // case: nonempty root
-    if (root->frame.node.number_of_keys > 0) return root_num;
+    if (root->frame.node.number_of_keys > 0) {
+        unpin(root);
+        return root_num;
+    }
     
     // case: empty root
     if (root->frame.node.is_leaf) {
@@ -446,12 +398,6 @@ pagenum_t adjust_root(buffer_t* header, pagenum_t root_num) {
     return new_root_num;
 }
 
-/* Utility function for deletion.  Retrieves
- * the index of a node's nearest neighbor (sibling)
- * to the left if one exists.  If not (the node
- * is the leftmost child), returns -1 to signify
- * this special case.
- */
 int get_neighbor_index(buffer_t* parent, pagenum_t node_num) {
     int i;
     if (parent->frame.node.one_more_page_number == node_num) return -1; 
@@ -462,13 +408,6 @@ int get_neighbor_index(buffer_t* parent, pagenum_t node_num) {
     return NOT_FOUND;
 }
 
-/* Coalesces a node that has become
- * too small after deletion
- * with a neighboring node that
- * can accept the additional entries
- * without exceeding the maximum.
- * returns root page's page number.
- */
 pagenum_t coalesce_nodes(buffer_t* header, pagenum_t root_num, buffer_t* node,
                          buffer_t* neighbor,
                          int neighbor_index, int64_t k_prime) {
@@ -522,12 +461,6 @@ pagenum_t coalesce_nodes(buffer_t* header, pagenum_t root_num, buffer_t* node,
     return root_num;
 }
 
-/* Redistributes entries between two nodes when
- * one has become too small after deletion
- * but its neighbor is too big to append the
- * small node's entries without exceeding the maximum
- * only called in internal node
- */
 void redistribute_nodes(int table_id, buffer_t* node, buffer_t* neighbor,
                         int neighbor_index, int k_prime_index, int64_t k_prime) {
     int i;
@@ -581,12 +514,6 @@ void redistribute_nodes(int table_id, buffer_t* node, buffer_t* neighbor,
     neighbor->frame.node.number_of_keys--;
 }
 
-/* Deletes an entry from the B+ tree.
- * Removes the record and its key and pointer
- * from the leaf, and then makes all appropriate
- * changes to preserve the B+ tree properties.
- * returns root page's page number after deletion.
- */
 pagenum_t delete_entry(buffer_t* header, pagenum_t root_num, pagenum_t node_num, int64_t key) {
     int min_keys;
     pagenum_t neighbor_num, parent_num, new_root_num;
@@ -654,9 +581,6 @@ pagenum_t delete_entry(buffer_t* header, pagenum_t root_num, pagenum_t node_num,
     }
 }
 
-/* Find the matching record and delete it if found.
- * If success, return 0. Otherwise, return non-zero value.
- */
 int db_delete(int table_id, int64_t key) {
     if (!init) return BAD_REQUEST;
     if (check_fd(table_id) == NOT_FOUND) return NOT_FOUND;
