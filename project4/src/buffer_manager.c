@@ -36,7 +36,7 @@ int buf_read_table(char* pathname) {
     int header_num = add_buf();
     buffer_t* header = buf_pool.buffers + header_num;
     set_mru(header_num);
-    if (!file_read_init(table_id, header)) {
+    if (!file_read_table(table_id, header)) {
         memset(header, 0, PAGE_SIZE);
         header->frame.header.number_of_pages = 1;
     }
