@@ -1,9 +1,9 @@
-#include "bpt.h"
+#include "bpt.hpp"
 
-buffer_pool_t buf_pool;
-char pathnames[10][512];
-int fds[10];
-int init;
+// /*extern*/ buffer_pool_t buf_pool;
+// /*extern*/ char pathnames[10][512];
+// /*extern*/ int fds[10];
+// /*extern*/ int init;
 
 int init_db(int num_buf) {
     // size is equal to or less than zero

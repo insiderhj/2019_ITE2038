@@ -1,7 +1,7 @@
 #ifndef __BUFFER_MANAGER_H__
 #define __BUFFER_MANAGER_H__
 
-#include "bpt.h"
+#include "bpt.hpp"
 
 /**
  * Allocate the buffer pool (array) with the given number of entries and initialize other fields.

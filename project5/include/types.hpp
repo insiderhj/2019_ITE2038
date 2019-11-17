@@ -9,6 +9,8 @@
 #include <fcntl.h>
 #include <unistd.h>
 
+#include <list>
+
 // page properties
 #define PAGE_SIZE 4096
 #define OFF(pagenum) ((pagenum) * PAGE_SIZE)
@@ -43,11 +45,25 @@ typedef struct Queue Queue;
 typedef struct buffer_t buffer_t;
 typedef struct buffer_pool_t buffer_pool_t;
 
+typedef struct lock_t lock_t;
+typedef struct trx_t trx_t;
+
 // extern variables
 extern int fds[10];
 extern buffer_pool_t buf_pool;
 extern int init;
 extern char pathnames[10][512];
+
+enum lock_mode {
+    SHARED,
+    EXCLUSIVE,
+};
+
+enum trx_state {
+    IDLE,
+    RUNNING,
+    WAITING,
+};
 
 /**
  * key, value type for leaf node
@@ -145,6 +161,20 @@ struct buffer_pool_t {
     int num_buffers;
     int mru;
     int lru;
+};
+
+struct lock_t {
+    int table_id;
+    int key;
+    lock_mode mode;
+    trx_t* trx;
+};
+
+struct trx_t {
+    int trx_id;
+    trx_state state;
+    std::list<lock_t*> trx_locks;
+    lock_t* wait_lock;
 };
 
 #endif

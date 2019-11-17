@@ -1,7 +1,7 @@
 #ifndef __JOIN_H__
 #define __JOIN_H__
 
-#include "bpt.h"
+#include "bpt.hpp"
 
 /**
  * Open file to save join result

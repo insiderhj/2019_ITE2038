@@ -1,11 +1,11 @@
 #ifndef __BPT_H__
 #define __BPT_H__
 
-#include "types.h"
-#include "disk_space_manager.h"
-#include "buffer_manager.h"
-#include "printer.h"
-#include "join.h"
+#include "types.hpp"
+#include "disk_space_manager.hpp"
+#include "buffer_manager.hpp"
+#include "printer.hpp"
+#include "join.hpp"
 
 /// open
 

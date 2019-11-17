@@ -1,7 +1,7 @@
-#include "bpt.h"
+#include "bpt.hpp"
 #include <time.h>
 
-int fds[10];
+// /*extern*/ int fds[10];
 
 int test(char* pathname);
 

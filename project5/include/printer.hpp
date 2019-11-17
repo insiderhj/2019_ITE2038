@@ -1,7 +1,7 @@
 #ifndef __PRINTER_H__
 #define __PRINTER_H__
 
-#include "bpt.h"
+#include "bpt.hpp"
 
 // print
 void enqueue(Queue* q, pagenum_t data);

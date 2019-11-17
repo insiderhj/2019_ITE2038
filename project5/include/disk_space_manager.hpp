@@ -1,7 +1,7 @@
 #ifndef __FILE_MANAGER_H__
 #define __FILE_MANAGER_H__
 
-#include "bpt.h"
+#include "bpt.hpp"
 
 /**
  * Check if given pathname is valid

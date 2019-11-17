@@ -1,4 +1,4 @@
-#include "bpt.h"
+#include "bpt.hpp"
 
 void enqueue(Queue* q, pagenum_t data) {
     if(q->item_count != QUEUE_SIZE) {
