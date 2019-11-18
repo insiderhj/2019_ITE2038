@@ -1,10 +1,5 @@
 #include "bpt.hpp"
 
-int fds[10];
-buffer_pool_t buf_pool;
-int init;
-char pathnames[10][512];
-
 int open_table(char* pathname) {
     if (!init) return BAD_REQUEST;
 

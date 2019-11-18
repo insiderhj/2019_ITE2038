@@ -12,7 +12,7 @@ int begin_trx() {
     trxs.push_back(t);
     return t.trx_id;
 }
-
+   
 int end_trx(int tid) {
     std::list<trx_t>::iterator it = std::find_if(trxs.begin(),
                                                  trxs.end(),
@@ -22,6 +22,7 @@ int end_trx(int tid) {
     if (it == trxs.end()) return 0;
 
     // 여기 뭔가 써야되는데...
+
     
     trxs.erase(it);
     return tid;

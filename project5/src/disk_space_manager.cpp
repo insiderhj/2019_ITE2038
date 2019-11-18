@@ -1,7 +1,7 @@
 #include "bpt.hpp"
 
-// /*extern*/ char pathnames[10][512];
-// /*extern*/ int fds[10];
+char pathnames[10][512];
+int fds[10];
 
 int check_pathname(char* pathname) {
     int i;

@@ -1,8 +1,6 @@
 #include "bpt.hpp"
 #include <time.h>
 
-// /*extern*/ int fds[10];
-
 int test(char* pathname);
 
 int main( int argc, char ** argv ) {
