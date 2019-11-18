@@ -14,10 +14,10 @@ TARGET_SRC:=$(SRCDIR)main.cpp
 TARGET_OBJ:=$(SRCDIR)main.o
 
 # Include more files if you write another source file.
-SRCS_FOR_LIB:=$(SRCDIR)bpt.cpp $(SRCDIR)disk_space_manager.cpp $(SRCDIR)buffer_manager.cpp $(SRCDIR)printer.cpp $(SRCDIR)join.cpp
+SRCS_FOR_LIB:=$(SRCDIR)bpt.cpp $(SRCDIR)disk_space_manager.cpp $(SRCDIR)buffer_manager.cpp $(SRCDIR)printer.cpp $(SRCDIR)join.cpp $(SRCDIR)lock_manager.cpp
 OBJS_FOR_LIB:=$(SRCS_FOR_LIB:.cpp=.o)
 
-CFLAGS+= -g -fPIC -I $(INC)
+CFLAGS+= -std=c++14 -g -fPIC -I $(INC)
 
 TARGET=main
 
@@ -37,6 +37,9 @@ $(SRCDIR)printer.o:
 
 $(SRCDIR)join.o:
 	$(CC) $(CFLAGS) -o $(SRCDIR)join.o -c $(SRCDIR)join.cpp
+
+$(SRCDIR)lock_manager.o:
+	$(CC) $(CFLAGS) -o $(SRCDIR)lock_manager.o -c $(SRCDIR)lock_manager.cpp
 
 $(TARGET_OBJ):
 	$(CC) $(CFLAGS) -o $(TARGET_OBJ) -c $(TARGET_SRC)

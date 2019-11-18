@@ -6,6 +6,7 @@
 #include "buffer_manager.hpp"
 #include "printer.hpp"
 #include "join.hpp"
+#include "lock_manager.hpp"
 
 /// open
 
