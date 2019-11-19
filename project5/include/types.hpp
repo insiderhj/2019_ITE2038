@@ -10,6 +10,8 @@
 #include <unistd.h>
 #include <pthread.h>
 
+#include <unordered_map>
+#include <tuple>
 #include <list>
 
 // page properties

@@ -17,7 +17,7 @@ TARGET_OBJ:=$(SRCDIR)main.o
 SRCS_FOR_LIB:=$(SRCDIR)bpt.cpp $(SRCDIR)disk_space_manager.cpp $(SRCDIR)buffer_manager.cpp $(SRCDIR)printer.cpp $(SRCDIR)join.cpp $(SRCDIR)lock_manager.cpp
 OBJS_FOR_LIB:=$(SRCS_FOR_LIB:.cpp=.o)
 
-CFLAGS+= -std=c++14 -g -fPIC -I $(INC)
+CFLAGS+= -std=c++14 -g -fPIC -I $(INC) -Wall -Wformat=0
 
 TARGET=main
 

@@ -10,7 +10,6 @@ int open_join_file(char* pathname) {
 }
 
 pagenum_t find_leftmost_leaf(int table_id, pagenum_t root_num) {
-    int i;
     pagenum_t c_num = root_num;
 
     // tree doesn't have root
@@ -51,7 +50,7 @@ int join_table(int table_id_1, int table_id_2, char * pathname) {
     if (join_file == CONFLICT) return CONFLICT;
     if (join_file == -1) return INTERNAL_ERR;
 
-    buffer_t* header_1, * header_2, * buf_1, * buf_2, * tmp;
+    buffer_t* header_1, * header_2, * buf_1, * buf_2;
     
     header_1 = get_buf(table_id_1, 0, 0);
     header_2 = get_buf(table_id_2, 0, 0);
@@ -61,8 +60,6 @@ int join_table(int table_id_1, int table_id_2, char * pathname) {
     buf_2 = get_buf(table_id_2, find_leftmost_leaf(table_id_2, header_2->frame.header.root_page_number), 0);
     unpin(header_1);
     unpin(header_2);
-
-    int64_t key_1, key_2;
     int r, s;
     
     while (buf_1->page_num != 0 && buf_2->page_num != 0) {

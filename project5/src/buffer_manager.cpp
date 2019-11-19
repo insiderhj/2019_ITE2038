@@ -74,7 +74,7 @@ void unpin(buffer_t* buf) {
 int find_buf(int table_id, pagenum_t pagenum) {
     if (buf_pool.num_buffers == 0) return NOT_FOUND;
 
-    int i, buf_num = buf_pool.mru;
+    int buf_num = buf_pool.mru;
     buffer_t* buf = buf_pool.buffers + buf_pool.mru;
     while (buf->prev != -1) {
         if (buf->table_id == table_id && buf->page_num == pagenum) return buf_num;
@@ -88,7 +88,7 @@ int find_buf(int table_id, pagenum_t pagenum) {
 buffer_t* get_buf(int table_id, pagenum_t pagenum, uint32_t is_dirty) {
     if (!init) return NULL;
 
-    int i, buf_num = find_buf(table_id, pagenum);
+    int buf_num = find_buf(table_id, pagenum);
     buffer_t* buf;
 
     // cannot find buf in pool
@@ -171,8 +171,6 @@ buffer_t* buf_alloc_page(buffer_t* header) {
 
     // get one free page from list
     buffer_t* buf = get_buf(header->table_id, header->frame.header.free_page_number, 1);
-    pagenum_t free_page_num = header->frame.header.free_page_number;
-    // file_read_page(table_id, free_page_num, buf);
 
     // modify free page list
     header->frame.header.free_page_number = buf->frame.free.next_free_page_number;

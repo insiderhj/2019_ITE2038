@@ -408,7 +408,6 @@ pagenum_t coalesce_nodes(buffer_t* header, pagenum_t root_num, buffer_t* node,
                          buffer_t* neighbor,
                          int neighbor_index, int64_t k_prime) {
     int i, j, neighbor_insertion_index, node_end;
-    pagenum_t tmp_num;
     buffer_t* tmp;
 
     if (neighbor_index == -1) {
@@ -512,7 +511,7 @@ void redistribute_nodes(int table_id, buffer_t* node, buffer_t* neighbor,
 
 pagenum_t delete_entry(buffer_t* header, pagenum_t root_num, pagenum_t node_num, int64_t key) {
     int min_keys;
-    pagenum_t neighbor_num, parent_num, new_root_num;
+    pagenum_t neighbor_num, new_root_num;
     int neighbor_index;
     int k_prime_index;
     int64_t k_prime;
