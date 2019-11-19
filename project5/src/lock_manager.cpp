@@ -2,7 +2,7 @@
 
 pthread_mutex_t mutex;
 std::list<trx_t> trxs;
-int max_tid;
+int max_tid = 1;
 
 int begin_trx() {
     trx_t t;
@@ -24,7 +24,7 @@ int end_trx(int tid) {
     
     // not found
     if (it == trxs.end()) return 0;
-    
+
     trxs.erase(it);
     return tid;
 }
