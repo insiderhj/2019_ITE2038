@@ -1,8 +1,5 @@
 #include "bpt.hpp"
 
-// /*extern*/ char pathnames[10][512];
-// /*extern*/ int fds[10];
-
 int open_join_file(char* pathname) {
     int i;
     for (i = 0; i < 10; i++) {
