@@ -1,5 +1,5 @@
-#ifndef __BPT_H__
-#define __BPT_H__
+#ifndef __BPT_HPP__
+#define __BPT_HPP__
 
 #include "types.hpp"
 #include "disk_space_manager.hpp"
@@ -7,6 +7,7 @@
 #include "printer.hpp"
 #include "join.hpp"
 #include "lock_manager.hpp"
+#include "util.hpp"
 
 /// open
 
@@ -17,16 +18,6 @@
  * @returns unique table id if success. Otherwise, return negative value
  */
 int open_table(char* pathname);
-
-/// util
-
-/**
- * Finds the appropriate place to split a node that is too big into two.
- * 
- * @param len original length to cut
- * @returns rounded value of len
- */
-int cut(int len);
 
 /// find
 

@@ -1,5 +1,5 @@
-#ifndef __TYPES_H__
-#define __TYPES_H__
+#ifndef __TYPES_HPP__
+#define __TYPES_HPP__
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,7 +11,7 @@
 #include <pthread.h>
 
 #include <unordered_map>
-#include <tuple>
+#include <string>
 #include <list>
 
 // page properties
@@ -58,6 +58,7 @@ extern int init;
 extern char pathnames[10][512];
 extern std::list<trx_t> trxs;
 extern int max_tid;
+extern std::unordered_map<pagenum_t, std::tuple<lock_t*, lock_t*> > lock_table;
 
 enum lock_mode {
     SHARED,
@@ -155,17 +156,15 @@ struct buffer_t {
     pagenum_t page_num;
     uint32_t is_dirty;
     uint32_t is_pinned;
-    uint32_t is_allocated;
-    int next;
-    int prev;
+    std::string next;
+    std::string prev;
 };
 
 struct buffer_pool_t {
-    buffer_t* buffers;
+    std::unordered_map<std::string, buffer_t> buffers;
     int capacity;
-    int num_buffers;
-    int mru;
-    int lru;
+    std::string mru;
+    std::string lru;
 };
 
 struct lock_t {
@@ -173,6 +172,9 @@ struct lock_t {
     int key;
     lock_mode mode;
     trx_t* trx;
+
+    lock_t* prev;
+    lock_t* next;
 };
 
 struct trx_t {

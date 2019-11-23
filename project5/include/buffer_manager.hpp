@@ -1,5 +1,5 @@
-#ifndef __BUFFER_MANAGER_H__
-#define __BUFFER_MANAGER_H__
+#ifndef __BUFFER_MANAGER_HPP__
+#define __BUFFER_MANAGER_HPP__
 
 #include "bpt.hpp"
 
@@ -22,9 +22,9 @@ int buf_read_table(char* pathname);
 /**
  * Set buffer with buf_num as most recently used buffer.
  * 
- * @param buf_num buffer's index in buffer pool
+ * @param buf_key buffer's key in buffer pool
  */
-void set_mru(int buf_num);
+void set_mru(std::string buf_key);
 
 /**
  * unpin buffer
@@ -32,15 +32,6 @@ void set_mru(int buf_num);
  * @param buf pinned buffer
  */
 void unpin(buffer_t* buf);
-
-/**
- * Find buffer matching given table_id and page number in buffer pool
- * 
- * @param table_id searching table id
- * @param pagenum searching page number
- * @returns matched buffer's index in buffer pool. if not found, return negative value
- */
-int find_buf(int table_id, pagenum_t pagenum);
 
 /**
  * Get buffer matching given table_id and page number.
@@ -53,26 +44,21 @@ int find_buf(int table_id, pagenum_t pagenum);
 buffer_t* get_buf(int table_id, pagenum_t pagenum, uint32_t is_dirty);
 
 /**
- * Find not using buffer frame in buffer pool
- * 
- * @returns index of free buffer frame
- */
-int find_free_buf();
-
-/**
  * Find least recently used buffer which is not pinned
  * 
- * @returns index of deletion target buffer
+ * @returns key of deletion target buffer
  */
-int find_deletion_target();
+std::string find_deletion_target();
 
 /**
  * Add new buffer space in buffer pool.
  * If there is no free buffer, delete one and add in the space.
  * 
+ * @param table_id table id for new buffer
+ * @param pagenum pagenum for new buffer
  * @returns index of new buffer in buffer pool
  */
-int add_buf();
+std::string add_buf(int table_id, pagenum_t pagenum);
 
 /**
  * Alloc new free page in table.
@@ -80,7 +66,7 @@ int add_buf();
  * @param header_page
  * @returns allocated buffer if success. Otherwise, return NULL
  */
-buffer_t* buf_alloc_page(buffer_t* header_page);
+buffer_t* buf_alloc_page(buffer_t* header);
 
 /**
  * Free a page and insert the page in free page list
@@ -88,14 +74,14 @@ buffer_t* buf_alloc_page(buffer_t* header_page);
  * @param header_page pinned header page of current table
  * @param p buffer to free
  */
-void buf_free_page(buffer_t* header_page, buffer_t* p);
+void buf_free_page(buffer_t* header, buffer_t* p);
 
 /**
  * Free a buffer. if dirty bit is set, write on disk
  * 
- * @param buf_num
+ * @param buf_key
  */
-void flush_buf(int buf_num);
+void flush_buf(std::string buf_key);
 
 /**
  * Change root number of table

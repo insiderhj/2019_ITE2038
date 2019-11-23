@@ -1,7 +1,7 @@
 #include "bpt.hpp"
 
-pthread_mutex_t mutex;
-// std::unordered_map<pagenum_t, std::tuple<lock_t*, lock_t*> > lock_table;
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+std::unordered_map<pagenum_t, std::tuple<lock_t*, lock_t*> > lock_table;
 std::list<trx_t> trxs;
 int max_tid = 1;
 

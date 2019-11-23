@@ -1,5 +1,5 @@
-#ifndef __JOIN_H__
-#define __JOIN_H__
+#ifndef __JOIN_HPP__
+#define __JOIN_HPP__
 
 #include "bpt.hpp"
 

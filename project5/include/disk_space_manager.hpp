@@ -1,5 +1,5 @@
-#ifndef __FILE_MANAGER_H__
-#define __FILE_MANAGER_H__
+#ifndef __FILE_MANAGER_HPP__
+#define __FILE_MANAGER_HPP__
 
 #include "bpt.hpp"
 

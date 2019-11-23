@@ -29,10 +29,6 @@ int open_table(char* pathname) {
     return fds[i];
 }
 
-int cut(int len) {
-    return len % 2 == 0 ? len / 2 : len / 2 + 1;
-}
-
 pagenum_t find_leaf(int table_id, pagenum_t root_num, int64_t key) {
     int i;
     pagenum_t c_num = root_num;

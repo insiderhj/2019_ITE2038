@@ -1,5 +1,5 @@
-#ifndef __LOCK_MANAGER_H__
-#define __LOCK_MANAGER_H__
+#ifndef __LOCK_MANAGER_HPP__
+#define __LOCK_MANAGER_HPP__
 
 #include "bpt.hpp"
 

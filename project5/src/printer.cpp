@@ -22,7 +22,7 @@ pagenum_t dequeue(Queue* q) {
     return data;  
 }
 
-int print_table(int table_id) {
+int print_table(int table_id, char* pathname) {
     if (check_fd(table_id) == NOT_FOUND) return NOT_FOUND;
     Queue q;
     int i;
@@ -30,7 +30,7 @@ int print_table(int table_id) {
     buffer_t* header_page, * tmp;
     int64_t enter_key;
 
-    int fd = open("print_table_result.txt", O_CREAT | O_NOFOLLOW | O_RDWR | O_TRUNC, 0666);
+    int fd = open(pathname, O_CREAT | O_NOFOLLOW | O_RDWR | O_TRUNC, 0666);
 
     q.front = 0;
     q.rear = -1;
@@ -84,13 +84,13 @@ int print_table(int table_id) {
 }
 
 void print_buf() {
-    printf("buf info - mru: %d, lru: %d\n", buf_pool.mru, buf_pool.lru);
-    int buf_num = buf_pool.mru;
-    buffer_t* buf = buf_pool.buffers + buf_num;
-    while (buf->prev != -1) {
-        printf("buf_num: %d, table_id: %d, pagenum: %lu\n", buf_num, buf->table_id, buf->page_num);
-        buf_num = buf->prev;
-        buf = buf_pool.buffers + buf_num;
-    }
-    printf("buf_num: %d, table_id: %d, pagenum: %lu\n", buf_num, buf->table_id, buf->page_num);
+    printf("buf info - buf_cnt: %d, mru: %s, lru: %s\n", buf_pool.buffers.size(), buf_pool.mru.c_str(), buf_pool.lru.c_str());
+    // std::string buf_key = buf_pool.mru;
+    // buffer_t* buf = &(buf_pool.buffers.find(buf_key)->second);
+    // while (buf->prev != "") {
+    //     printf("buf_key: %s, table_id: %d, pagenum: %lu\n", buf_key.c_str(), buf->table_id, buf->page_num);
+    //     buf_key = buf->prev;
+    //     buf = &(buf_pool.buffers.find(buf_key)->second);
+    // }
+    // printf("buf_key: %s, table_id: %d, pagenum: %lu\n", buf_key.c_str(), buf->table_id, buf->page_num);
 }
