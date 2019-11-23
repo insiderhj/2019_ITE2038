@@ -11,7 +11,7 @@ int main( int argc, char ** argv ) {
     int first_file, second_file;
     char file_name[512];
     int result;
-    init_db(5000);
+    init_db(100000);
 
     printf("> ");
     while (scanf("%c", &instruction) != EOF) {
@@ -59,7 +59,6 @@ int main( int argc, char ** argv ) {
                 shutdown_db();
                 return 0;
         }
-        print_buf();
         if (result < 0) printf("ERROR CODE: %d\n", result);
         while (getchar() != (int)'\n');
         printf("> ");
