@@ -72,7 +72,6 @@ buffer_t* get_buf(int table_id, pagenum_t pagenum, uint32_t is_dirty) {
     if (!init) return NULL;
 
     buffer_t* buf;
-
     std::string buf_key = page_id(table_id, pagenum);
     auto it = buf_pool.buffers.find(buf_key);
 

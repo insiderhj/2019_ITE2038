@@ -11,6 +11,7 @@
 #include <pthread.h>
 
 #include <unordered_map>
+#include <vector>
 #include <string>
 #include <list>
 
@@ -58,7 +59,7 @@ extern int init;
 extern char pathnames[10][512];
 extern std::list<trx_t> trxs;
 extern int max_tid;
-extern std::unordered_map<pagenum_t, std::tuple<lock_t*, lock_t*> > lock_table;
+extern std::unordered_map<std::string, lock_t*> lock_table;
 
 enum lock_mode {
     SHARED,
@@ -169,19 +170,16 @@ struct buffer_pool_t {
 
 struct lock_t {
     int table_id;
-    int key;
+    int pagenum;
     lock_mode mode;
     trx_t* trx;
-
-    lock_t* prev;
-    lock_t* next;
 };
 
 struct trx_t {
     int trx_id;
     trx_state state;
     std::list<lock_t*> trx_locks;
-    lock_t* wait_lock;
+    // lock_t* wait_lock;
 };
 
 #endif

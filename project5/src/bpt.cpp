@@ -56,7 +56,7 @@ pagenum_t find_leaf(int table_id, pagenum_t root_num, int64_t key) {
     return c_num;
 }
 
-int db_find(int table_id, int64_t key, char* ret_val) {
+int db_find(int table_id, int64_t key, char* ret_val, int trx_id) {
     if (!init) return BAD_REQUEST;
     if (check_fd(table_id) == NOT_FOUND) return NOT_FOUND;
 
@@ -74,6 +74,7 @@ int db_find(int table_id, int64_t key, char* ret_val) {
     // leaf not found
     if (leaf_num == 0) return NOT_FOUND;
 
+    lock_t* lock = require_lock(table_id, leaf_num, find_trx(trx_id), SHARED);
     leaf = get_buf(table_id, leaf_num, 0);
 
     // search key in the leaf
@@ -85,12 +86,55 @@ int db_find(int table_id, int64_t key, char* ret_val) {
     // value not found
     if (i == leaf->frame.node.number_of_keys) {
         unpin(leaf);
+        release_lock(lock);
         return NOT_FOUND;
     }
     
     // copy value into ret_val
     if (ret_val) strcpy(ret_val, leaf->frame.node.key_values[i].value);
     unpin(leaf);
+    release_lock(lock);
+    return 0;
+}
+
+int db_update(int table_id, int64_t key, char* value, int trx_id) {
+    if (!init) return BAD_REQUEST;
+    if (check_fd(table_id) == NOT_FOUND) return NOT_FOUND;
+
+    buffer_t* header, * leaf;
+
+    header = get_buf(table_id, 0, 0);
+    if (header->frame.header.root_page_number == 0) {
+        unpin(header);
+        return NOT_FOUND;
+    }
+
+    pagenum_t leaf_num = find_leaf(table_id, header->frame.header.root_page_number, key);
+    unpin(header);
+
+    // leaf not found
+    if (leaf_num == 0) return NOT_FOUND;
+
+    lock_t* lock = require_lock(table_id, leaf_num, find_trx(trx_id), EXCLUSIVE);
+    leaf = get_buf(table_id, leaf_num, 0);
+
+    // search key in the leaf
+    int i;
+    for (i = 0; i < leaf->frame.node.number_of_keys; i++) {
+        if (leaf->frame.node.key_values[i].key == key) break;
+    }
+    
+    // value not found
+    if (i == leaf->frame.node.number_of_keys) {
+        unpin(leaf);
+        release_lock(lock);
+        return NOT_FOUND;
+    }
+
+    // copy value into ret_val
+    strcpy(leaf->frame.node.key_values[i].value, value);
+    unpin(leaf);
+    release_lock(lock);
     return 0;
 }
 
