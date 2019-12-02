@@ -11,7 +11,9 @@ int main( int argc, char ** argv ) {
     int first_file, second_file;
     char file_name[512];
     int result;
+    int trx_id;
     init_db(100000);
+    trx_id = begin_trx();
 
     printf("> ");
     while (scanf("%c", &instruction) != EOF) {
@@ -29,13 +31,17 @@ int main( int argc, char ** argv ) {
                 scanf("%d %ld", &file_num, &key);
                 result = db_delete(file_num, key);
                 break;
+            case 'u':
+                scanf("%d %ld %s", &file_num, &key, value);
+                result = db_update(file_num, key, value, trx_id);
+                break;
             case 'i':
                 scanf("%d %ld %s", &file_num, &key, value);
                 result = db_insert(file_num, key, value);
                 break;
 	        case 'f':
                 scanf("%d %ld", &file_num, &key);
-                result = db_find(file_num, key, value);
+                result = db_find(file_num, key, value, trx_id);
                 if (result == 0) printf("%ld: %s\n", key, value);
                 break;
             case 'j':
@@ -56,6 +62,7 @@ int main( int argc, char ** argv ) {
                 break;
             case 'q':
                 while (getchar() != (int)'\n');
+                end_trx(trx_id);
                 shutdown_db();
                 return 0;
         }

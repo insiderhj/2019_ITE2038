@@ -97,6 +97,44 @@ int db_find(int table_id, int64_t key, char* ret_val, int trx_id) {
     return 0;
 }
 
+int db_find(int table_id, int64_t key, char* ret_val) {
+    if (!init) return BAD_REQUEST;
+    if (check_fd(table_id) == NOT_FOUND) return NOT_FOUND;
+
+    buffer_t* header, * leaf;
+
+    header = get_buf(table_id, 0, 0);
+    if (header->frame.header.root_page_number == 0) {
+        unpin(header);
+        return NOT_FOUND;
+    }
+
+    pagenum_t leaf_num = find_leaf(table_id, header->frame.header.root_page_number, key);
+    unpin(header);
+
+    // leaf not found
+    if (leaf_num == 0) return NOT_FOUND;
+
+    leaf = get_buf(table_id, leaf_num, 0);
+
+    // search key in the leaf
+    int i;
+    for (i = 0; i < leaf->frame.node.number_of_keys; i++) {
+        if (leaf->frame.node.key_values[i].key == key) break;
+    }
+    
+    // value not found
+    if (i == leaf->frame.node.number_of_keys) {
+        unpin(leaf);
+        return NOT_FOUND;
+    }
+    
+    // copy value into ret_val
+    if (ret_val) strcpy(ret_val, leaf->frame.node.key_values[i].value);
+    unpin(leaf);
+    return 0;
+}
+
 int db_update(int table_id, int64_t key, char* value, int trx_id) {
     if (!init) return BAD_REQUEST;
     if (check_fd(table_id) == NOT_FOUND) return NOT_FOUND;
@@ -116,7 +154,7 @@ int db_update(int table_id, int64_t key, char* value, int trx_id) {
     if (leaf_num == 0) return NOT_FOUND;
 
     lock_t* lock = require_lock(table_id, leaf_num, find_trx(trx_id), EXCLUSIVE);
-    leaf = get_buf(table_id, leaf_num, 0);
+    leaf = get_buf(table_id, leaf_num, 1);
 
     // search key in the leaf
     int i;
@@ -348,9 +386,7 @@ pagenum_t insert_into_leaf_after_splitting(buffer_t* header, pagenum_t root_num,
 int db_insert(int table_id, int64_t key, char* value) {
     if (!init) return BAD_REQUEST;
     if (check_fd(table_id) == NOT_FOUND) return NOT_FOUND; 
-
-    char res[VALUE_SIZE];
-    if (db_find(table_id, key, res) == 0) return CONFLICT;
+    if (db_find(table_id, key, NULL) == 0) return CONFLICT;
 
     buffer_t* header;
     pagenum_t root_num;

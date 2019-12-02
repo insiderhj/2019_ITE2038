@@ -37,9 +37,14 @@ pagenum_t find_leaf(int table_id, pagenum_t root, int64_t key);
  * @param table_id unique table id for search
  * @param key key to search
  * @param ret_val store matched value of given key in here
+ * @param trx_id
  * @returns 0 if success. Otherwise, return negative value
  */
 int db_find(int table_id, int64_t key, char* ret_val);
+
+int db_find(int table_id, int64_t key, char* ret_val, int trx_id);
+
+int db_update(int table_id, int64_t key, char* value, int trx_id);
 
 // insert
 
