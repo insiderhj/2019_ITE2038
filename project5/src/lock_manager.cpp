@@ -10,23 +10,19 @@ int begin_trx() {
     trx_t t;
     t.trx_id = __sync_fetch_and_add(&max_tid, 1);
     t.state = IDLE;
-    // t.wait_lock = NULL;
 
     pthread_mutex_lock(&trx_mutex);
     trxs.push_back(t);
-    pthread_mutex_unlock(&trx_mutex);
     return t.trx_id;
 }
 
 int end_trx(int tid) {
-    pthread_mutex_lock(&trx_mutex);
     std::list<trx_t>::iterator it = std::find_if(trxs.begin(),
                                                  trxs.end(),
                                                  [tid](trx_t t){return t.trx_id == tid;});
     
     // not found
     if (it == trxs.end()) {
-        pthread_mutex_unlock(&trx_mutex);
         return 0;
     }
 
