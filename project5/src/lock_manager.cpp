@@ -1,7 +1,7 @@
 #include "bpt.hpp"
 
-pthread_mutex_t trx_mutex = PTHREAD_MUTEX_INITIALIZER;
-pthread_mutex_t lock_mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t trx_mutex;
+pthread_mutex_t lock_mutex;
 std::unordered_map<std::string, lock_t*> lock_table;
 std::list<trx_t> trxs;
 int max_tid = 1;

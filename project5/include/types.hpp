@@ -61,8 +61,8 @@ extern std::unordered_map<std::string, lock_t*> lock_table;
 extern std::list<trx_t> trxs;
 extern int max_tid;
 
-extern pthread_mutex_t trx_mutex = PTHREAD_MUTEX_INITIALIZER;
-extern pthread_mutex_t lock_mutex = PTHREAD_MUTEX_INITIALIZER;
+extern pthread_mutex_t trx_mutex;
+extern pthread_mutex_t lock_mutex;
 
 enum lock_mode {
     SHARED,
