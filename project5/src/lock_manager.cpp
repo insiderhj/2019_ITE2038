@@ -1,7 +1,7 @@
 #include "bpt.hpp"
 
-pthread_mutex_t trx_mutex;
-pthread_mutex_t lock_mutex;
+pthread_mutex_t trx_mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t lock_mutex = PTHREAD_MUTEX_INITIALIZER;
 std::unordered_map<std::string, lock_t*> lock_table;
 std::list<trx_t> trxs;
 int max_tid = 1;
@@ -37,18 +37,15 @@ int end_trx(int tid) {
 }
 
 trx_t* find_trx(int tid) {
-    pthread_mutex_lock(&trx_mutex);
     std::list<trx_t>::iterator it = std::find_if(trxs.begin(),
                                                  trxs.end(),
                                                  [tid](trx_t t){return t.trx_id == tid;});
     
     if (it == trxs.end()) {
-        pthread_mutex_unlock(&trx_mutex);
         return NULL;
     }
 
     trx_t* result = &(*it);
-    pthread_mutex_unlock(&trx_mutex);
     return result;
 }
 

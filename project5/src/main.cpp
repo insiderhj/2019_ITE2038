@@ -17,6 +17,7 @@ int main( int argc, char ** argv ) {
 
     printf("> ");
     while (scanf("%c", &instruction) != EOF) {
+        result = 0;
         switch (instruction) {
             case 'o':
                 scanf("%s", file_name);
@@ -66,7 +67,7 @@ int main( int argc, char ** argv ) {
                 shutdown_db();
                 return 0;
         }
-        // if (result < 0) printf("ERROR CODE: %d\n", result);
+        if (result < 0) printf("ERROR CODE: %d\n", result);
         while (getchar() != (int)'\n');
         printf("> ");
     }
