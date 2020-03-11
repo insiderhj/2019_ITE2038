@@ -57,7 +57,6 @@ extern int fds[10];
 extern buffer_pool_t buf_pool;
 extern int init;
 extern char pathnames[10][512];
-extern std::unordered_map<std::string, lock_t*> lock_table;
 extern std::list<trx_t> trxs;
 extern int max_tid;
 
